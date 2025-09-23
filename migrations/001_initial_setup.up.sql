@@ -6,6 +6,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Enable case-insensitive text
 CREATE EXTENSION IF NOT EXISTS "citext";
 
+-- Enable pgaudit for auditing
+CREATE EXTENSION IF NOT EXISTS "pgaudit";
+
 -- Function to automatically update the updated_at timestamp
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
@@ -30,7 +33,7 @@ BEGIN
 EXCEPTION
     -- Catch potential invalid UUID format
     WHEN invalid_text_representation THEN
-        RAISE EXCEPTION 'Invalid UUID format for app.tenant_id: "%''', tenant_id_text;
+        RAISE EXCEPTION 'Invalid UUID format for app.tenant_id: "%"', tenant_id_text;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -39,7 +42,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE OR REPLACE FUNCTION is_app_admin()
 RETURNS BOOLEAN AS $$
 BEGIN
-    RETURN current_user = '''app_admin''';
+    RETURN current_user = 'app_admin';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -49,14 +52,27 @@ $$
 BEGIN
    IF NOT EXISTS (
       SELECT FROM pg_catalog.pg_roles
-      WHERE  rolname = '''app_admin''') THEN
+      WHERE  rolname = 'app_admin') THEN
 
-      CREATE ROLE '''app_admin''';
+      CREATE ROLE app_admin;
    END IF;
 END
 $$;
 
 -- Grant privileges to the app_admin role
-GRANT USAGE ON SCHEMA public TO '''app_admin''';
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO '''app_admin''';
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO '''app_admin''';
+GRANT USAGE ON SCHEMA public TO app_admin;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app_admin;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO app_admin;
+
+-- Create a role for pgaudit
+DO
+$$
+BEGIN
+   IF NOT EXISTS (
+      SELECT FROM pg_catalog.pg_roles
+      WHERE  rolname = 'pgaudit_role') THEN
+
+      CREATE ROLE pgaudit_role;
+   END IF;
+END
+$$;
