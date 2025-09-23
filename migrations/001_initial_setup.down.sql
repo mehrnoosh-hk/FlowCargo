@@ -1,5 +1,10 @@
 -- Revert all changes made in the up migration
 
+-- Revoke privileges from the app_admin role
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA public FROM '''app_admin''';
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public FROM '''app_admin''';
+REVOKE USAGE ON SCHEMA public FROM '''app_admin''';
+
 -- Drop the app_admin role
 DROP ROLE IF EXISTS '''app_admin''';
 
