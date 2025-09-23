@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   postgres:
-    build: .
+    image: postgres:15.4
     container_name: flowcargo-postgres
     environment:
       POSTGRES_DB: flowcargo_dev
@@ -12,8 +10,6 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgresql.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
 
 volumes:
   postgres_data:
