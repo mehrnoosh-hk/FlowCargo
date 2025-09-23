@@ -1,0 +1,36 @@
+version: "2"
+# To generate type-safe code for each domain as described in the README,
+# please define a separate entry for each domain.
+sql:
+  # --- TENANT DOMAIN ---
+  # Add a block like this for each domain in your project.
+  - name: "tenant"
+    engine: "postgresql"
+    # Paths are relative to this file's location (./sqlc/)
+    schema: "../migrations"
+    queries: "../internal/domain/tenant/queries" # Path to this domain's SQL queries
+    gen:
+      go:
+        package: "queries"
+        # Generated code will be placed in the domain's 'queries' directory
+        out: "../internal/domain/tenant/queries"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_prepared_queries: false
+        emit_interface: true
+        emit_exact_table_names: false
+
+  # --- EXAMPLE: SHIPMENT TRACKING DOMAIN ---
+  # - name: "shipment_tracking"
+  #   engine: "postgresql"
+  #   schema: "../migrations"
+  #   queries: "../internal/domain/shipment_tracking/queries"
+  #   gen:
+  #     go:
+  #       package: "queries"
+  #       out: "../internal/domain/shipment_tracking/queries"
+  #       sql_package: "pgx/v5"
+  #       emit_json_tags: true
+  #       emit_prepared_queries: false
+  #       emit_interface: true
+  #       emit_exact_table_names: false
