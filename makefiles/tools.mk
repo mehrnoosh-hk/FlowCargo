@@ -46,6 +46,12 @@ install-misspell: ## Install misspell
 install-gosec: ## Install gosec
 	go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
 
+.PHONY: sqlc
+sqlc: ## Generate Go code from SQL queries
+	@echo "Generating SQLC code..."
+	sqlc generate -f sqlc/sqlc.yml
+	@echo "SQLC code generated successfully!"
+
 .PHONY: tools-version
 tools-version: ## Show versions of installed tools
 	@echo "=== Tool Versions ==="

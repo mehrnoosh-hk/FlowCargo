@@ -57,6 +57,15 @@ db-up: migrate-up ## Apply all pending migrations
 .PHONY: db-down
 db-down: migrate-down ## Rollback last migration
 
+# Docker commands
+.PHONY: docker-compose-up
+docker-compose-up: ## Start docker containers
+	docker-compose -f docker/dev/postgres/docker-compose.yml up -d
+
+.PHONY: docker-compose-down
+docker-compose-down: ## Stop docker containers
+	docker-compose -f docker/dev/postgres/docker-compose.yml down
+
 # Cleanup targets
 .PHONY: clean-all
 clean-all: clean test-clean ## Clean all artifacts (build and test)
