@@ -6,8 +6,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Enable case-insensitive text
 CREATE EXTENSION IF NOT EXISTS "citext";
 
--- Enable pgaudit for auditing
-CREATE EXTENSION IF NOT EXISTS "pgaudit";
+
 
 -- Function to automatically update the updated_at timestamp
 CREATE OR REPLACE FUNCTION set_updated_at()
@@ -68,15 +67,4 @@ GRANT USAGE ON SCHEMA public TO service_account;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO service_account;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_account;
 
--- Create a role for pgaudit
-DO
-$$
-BEGIN
-   IF NOT EXISTS (
-      SELECT FROM pg_catalog.pg_roles
-      WHERE  rolname = 'pgaudit_role') THEN
 
-      CREATE ROLE pgaudit_role;
-   END IF;
-END
-$$;
