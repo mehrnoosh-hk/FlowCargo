@@ -6,8 +6,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Enable case-insensitive text
 CREATE EXTENSION IF NOT EXISTS "citext";
 
--- Enable pgaudit for auditing
-CREATE EXTENSION IF NOT EXISTS "pgaudit";
+
 
 -- Function to automatically update the updated_at timestamp
 CREATE OR REPLACE FUNCTION set_updated_at()
@@ -26,7 +25,7 @@ BEGIN
     tenant_id_text := current_setting('app.tenant_id', true);
 
     IF tenant_id_text IS NULL OR tenant_id_text = '' THEN
-        RAISE EXCEPTION 'app.tenant_id is not set.';
+        RAISE EXCEPTION 'app.tenant_id is not set. All queries on tenant-scoped tables must be wrapped in With Tenant Context.';
     END IF;
 
     RETURN tenant_id_text::UUID;
@@ -38,41 +37,34 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 
--- Function to check if the current user is an app_admin
-CREATE OR REPLACE FUNCTION is_app_admin()
-RETURNS BOOLEAN AS $$
+-- Function to check if the current user is a service_account
+CREATE OR REPLACE FUNCTION is_service_account() RETURNS BOOLEAN AS $$
+DECLARE
+    setting_value TEXT;
 BEGIN
-    RETURN current_user = 'app_admin';
+    setting_value := current_setting('app.is_service_account', true);
+
+    -- Safely check the value. If it's not 'true', it's false.
+    RETURN setting_value IS NOT NULL AND setting_value = 'true';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Create the app_admin role
+-- Create the service_account role
 DO
 $$
 BEGIN
-   IF NOT EXISTS (
-      SELECT FROM pg_catalog.pg_roles
-      WHERE  rolname = 'app_admin') THEN
+    IF NOT EXISTS (
+       SELECT FROM pg_catalog.pg_roles
+       WHERE  rolname = 'service_account') THEN
 
-      CREATE ROLE app_admin;
-   END IF;
+       CREATE ROLE service_account;
+    END IF;
 END
 $$;
 
--- Grant privileges to the app_admin role
-GRANT USAGE ON SCHEMA public TO app_admin;
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO app_admin;
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO app_admin;
+-- Grant privileges to the service_account role (data manipulation only)
+GRANT USAGE ON SCHEMA public TO service_account;
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO service_account;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_account;
 
--- Create a role for pgaudit
-DO
-$$
-BEGIN
-   IF NOT EXISTS (
-      SELECT FROM pg_catalog.pg_roles
-      WHERE  rolname = 'pgaudit_role') THEN
 
-      CREATE ROLE pgaudit_role;
-   END IF;
-END
-$$;

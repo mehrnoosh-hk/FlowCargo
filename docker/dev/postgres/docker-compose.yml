@@ -1,8 +1,6 @@
-version: '3.8'
-
 services:
   postgres:
-    build: .
+    image: postgres:15.4
     container_name: flowcargo-postgres
     environment:
       POSTGRES_DB: flowcargo_dev
