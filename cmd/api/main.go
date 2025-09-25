@@ -1,7 +1,15 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"flowcargo/internal/app"
+)
 
 func main() {
-	fmt.Println("Welcome to FlowCargo!")
+	fmt.Println("Hello from main!")
+	err := app.CreateAndRun("./.env.dev")
+	if err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 }
