@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: tenant.sql
 
-package db
+package sqlc
 
 import (
 	"context"
@@ -148,10 +148,10 @@ func (q *Queries) ListTenants(ctx context.Context) ([]Tenant, error) {
 const updateTenant = `-- name: UpdateTenant :one
 UPDATE tenants
 SET
-    name = CASE WHEN $1::VARCHAR IS NOT NULL THEN $1::VARCHAR ELSE name END,
-    email = CASE WHEN $2::VARCHAR IS NOT NULL THEN $2::VARCHAR ELSE email END,
-    domain = CASE WHEN $3::VARCHAR IS NOT NULL THEN $3::VARCHAR ELSE domain END,
-    is_active = CASE WHEN $4::BOOLEAN IS NOT NULL THEN $4::BOOLEAN ELSE is_active END
+    name = COALESCE($1, name),
+    email = COALESCE($2, email),
+    domain = COALESCE($3, domain),
+    is_active = COALESCE($4, is_active)
 WHERE id = $5
 RETURNING id, name, email, domain, is_active, created_at, updated_at
 `
