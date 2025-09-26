@@ -46,3 +46,29 @@ var wireLogger = func(isDevelopment bool, level logger.LogLevel) (logger.Logger,
 	}
 	return l, nil
 }
+
+var createPool = func(ctx context.Context, dbURL string) (*pgxpool.Pool, error) {
+	pool, err := pgxpool.New(ctx, dbURL)
+	if err != nil {
+		return nil, err
+	}
+	return pool, nil
+}
+
+var createTenantRepo = func(pool *pgxpool.Pool) tenant.TenantRepository {
+	return tenant.NewTenantRepository(pool)
+}
+
+func (d Dependencies) getLogger() logger.Logger {
+	return d.Logger
+}
+
+func (d Dependencies) cleanup() error {
+	if d.dbPool != nil {
+		err := d.dbPool.Close()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
