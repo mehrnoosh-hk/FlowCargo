@@ -3,7 +3,7 @@
 //   sqlc v1.30.0
 // source: tenant.sql
 
-package sqlc
+package db
 
 import (
 	"context"
@@ -44,11 +44,11 @@ func (q *Queries) CreateTenant(ctx context.Context, arg CreateTenantParams) (Ten
 
 const deleteTenant = `-- name: DeleteTenant :exec
 DELETE FROM tenants
-WHERE id = $1
+WHERE id = $1::UUID
 `
 
-func (q *Queries) DeleteTenant(ctx context.Context, id pgtype.UUID) error {
-	_, err := q.db.Exec(ctx, deleteTenant, id)
+func (q *Queries) DeleteTenant(ctx context.Context, dollar_1 pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteTenant, dollar_1)
 	return err
 }
 
@@ -148,29 +148,41 @@ func (q *Queries) ListTenants(ctx context.Context) ([]Tenant, error) {
 const updateTenant = `-- name: UpdateTenant :one
 UPDATE tenants
 SET
-    name = COALESCE($1, name),
-    email = COALESCE($2, email),
-    domain = COALESCE($3, domain),
-    is_active = COALESCE($4, is_active)
-WHERE id = $5
+    name = CASE
+        WHEN $2::VARCHAR IS NOT NULL THEN $2
+        ELSE name
+    END,
+    email = CASE
+        WHEN $3::VARCHAR IS NOT NULL THEN $3
+        ELSE email
+    END,
+    domain = CASE
+        WHEN $4::VARCHAR IS NOT NULL THEN $4
+        ELSE domain
+    END,
+    is_active = CASE
+        WHEN $5::BOOL IS NOT NULL THEN $5
+        ELSE is_active
+    END
+WHERE id = $1
 RETURNING id, name, email, domain, is_active, created_at, updated_at
 `
 
 type UpdateTenantParams struct {
+	ID       pgtype.UUID `json:"id"`
 	Name     pgtype.Text `json:"name"`
 	Email    pgtype.Text `json:"email"`
 	Domain   pgtype.Text `json:"domain"`
 	IsActive pgtype.Bool `json:"is_active"`
-	ID       pgtype.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateTenant(ctx context.Context, arg UpdateTenantParams) (Tenant, error) {
 	row := q.db.QueryRow(ctx, updateTenant,
+		arg.ID,
 		arg.Name,
 		arg.Email,
 		arg.Domain,
 		arg.IsActive,
-		arg.ID,
 	)
 	var i Tenant
 	err := row.Scan(

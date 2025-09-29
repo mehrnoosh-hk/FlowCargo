@@ -2,7 +2,7 @@
 // versions:
 //   sqlc v1.30.0
 
-package sqlc
+package db
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 
 type Querier interface {
 	CreateTenant(ctx context.Context, arg CreateTenantParams) (Tenant, error)
-	DeleteTenant(ctx context.Context, id pgtype.UUID) error
+	DeleteTenant(ctx context.Context, dollar_1 pgtype.UUID) error
 	GetTenantByDomain(ctx context.Context, domain pgtype.Text) (Tenant, error)
 	GetTenantByEmail(ctx context.Context, email string) (Tenant, error)
 	GetTenantByID(ctx context.Context, id pgtype.UUID) (Tenant, error)
