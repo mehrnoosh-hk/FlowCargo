@@ -1,7 +1,6 @@
 package tenant
 
 import (
-	"context"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,19 +10,22 @@ import (
 type Tenant struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
-	Schema    string    `json:"schema"`
+	Email     string    `json:"email"`
+	Domain    *string   `json:"domain"`
+	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// Repository defines the interface for tenant persistence.
-type Repository interface {
-	CreateTenant(ctx context.Context, tenant *Tenant) error
-	GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
+type CreateTenantParams struct {
+	Name   string  `json:"name" validate:"required,min=2,max=100"`
+	Email  string  `json:"email" validate:"required,email"`
+	Domain *string `json:"domain" validate:"required,url"`
 }
-
-// Service defines the interface for the tenant service.
-type Service interface {
-	CreateTenant(ctx context.Context, name string) (*Tenant, error)
-	GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
+type UpdateTenantParams struct {
+	ID       uuid.UUID `json:"id" validate:"required"`
+	Name     *string    `json:"name" validate:"min=2,max=100"`
+	Email    *string    `json:"email" validate:"email"`
+	Domain   *string    `json:"domain" validate:"url"`
+	IsActive *bool      `json:"is_active"`
 }
