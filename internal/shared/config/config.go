@@ -16,27 +16,24 @@ type Environment string
 
 const (
 	Dev Environment = "dev"
+	Test Environment = "test"
 	Prod Environment = "prod"
 )
 
-
-
-type Database struct {
-	Host     string `json:"host"`
-	Port     string `json:"port"`
-	User     string `json:"user"`
-	Password string `json:"password"`
-	Database string `json:"database"`
-}
-
-
-
-func NewConfig() (Config, error) {
-	return Config{}, errors.New("Not Implemented")
+func NewConfigOrDefault() (Config) {
+	// Try to load config from file
+	// config, err := NewConfig()
+	err := errors.New("error loading config")
+	if err != nil {
+		return DefaultConfig()
+	}
+	//return config
+	return Config{}
 }
 
 func DefaultConfig() Config {
 	return Config{
+		Env: Dev,
 		Server: Server{
 			Host: "localhost",
 			Port: "8080",
@@ -46,7 +43,7 @@ func DefaultConfig() Config {
 			Port:     "5432",
 			User:     "postgres",
 			Password: "password",
-			Database: "flowcargo",
+			Name: "flowcargo_dev",
 		},
 		Logger: Logger{
 			Level:  "INFO",
