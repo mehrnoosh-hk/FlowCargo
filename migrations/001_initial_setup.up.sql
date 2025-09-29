@@ -1,3 +1,5 @@
+BEGIN;
+
 -- Create all functions, types, and extensions for the initial database setup.
 
 -- Enable UUID generation
@@ -67,4 +69,4 @@ GRANT USAGE ON SCHEMA public TO service_account;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO service_account;
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO service_account;
 
-
+COMMIT;

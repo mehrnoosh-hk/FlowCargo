@@ -1,3 +1,5 @@
+BEGIN;
+
 -- Revert all changes made in the up migration
 
 -- Revoke privileges from the service_account role
@@ -18,3 +20,5 @@ DROP FUNCTION IF EXISTS set_updated_at();
 -- Disable extensions
 DROP EXTENSION IF EXISTS "citext";
 DROP EXTENSION IF EXISTS "uuid-ossp";
+
+COMMIT;
