@@ -4,12 +4,14 @@ import (
 	"errors"
 	"flowcargo/internal/shared/logger"
 	"testing"
+	"context"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestDependenciesWiering(t *testing.T) {
-	t.Run("WireDependenciesFailsWhenWireLoggerFails", func(t *testing.T) {
+func TestDependenciesWiring(t *testing.T) {
+	t.Run("wireDeps fails if wireLogger fails", func(t *testing.T) {
+		testCtx := context.Background()
 		original := wireLogger
 		defer func() {
 			wireLogger = original
@@ -17,11 +19,12 @@ func TestDependenciesWiering(t *testing.T) {
 		wireLogger = func(isDevelopment bool, level logger.LogLevel) (logger.Logger, error) {
 			return logger.Logger{}, errors.New("mock error")
 		}
-		_, err := wireDependencies()
+		_, err := wireDeps(testCtx, &Database{}, true, logger.Debug)
 		require.Error(t, err)
 	})
 	
-	t.Run("WireDependenciesSucceedWhenWireLoggerSucceeds", func(t *testing.T) {
+	t.Run("wireDeps succeeds when wireLogger succeeds", func(t *testing.T) {
+		testCtx := context.Background()
 		original := wireLogger
 		defer func() {
 			wireLogger = original
@@ -29,7 +32,7 @@ func TestDependenciesWiering(t *testing.T) {
 		wireLogger = func(isDevelopment bool, level logger.LogLevel) (logger.Logger, error) {
 			return logger.Logger{}, nil
 		}
-		_, err := wireDependencies()
+		_, err := wireDeps(testCtx,  &Database{}, true, logger.Debug)
 		require.NoError(t, err)
 	})
 }

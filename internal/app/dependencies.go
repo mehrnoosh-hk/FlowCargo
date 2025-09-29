@@ -1,42 +1,69 @@
 package app
 
 import (
-	"fmt"
-	"flowcargo/internal/shared/config"
+	"context"
+	db "flowcargo/db/sqlc"
 	"flowcargo/internal/shared/logger"
-
-	"github.com/jackc/pgx/v5/pgxpool"
+	"flowcargo/internal/tenant"
+	"fmt"
 )
 
+// Dependencies type is based on interfaces, making it easier to replace with new implementations.
 type Dependencies struct {
-	config config.Config
-	dbPool *pgxpool.Pool
-	Logger logger.Logger
+	Logger   logger.Logger
+	Repos    Repositories
+	Services Services
+	Handlers Handlers
 }
 
-var wireDependencies = func() (Dependencies, error) {
+type Repositories struct {
+	TenantRepository tenant.TenantRepository
+	// Other repositories here
+}
+
+type Services struct {
+	TenantService tenant.TenantService
+	// Other services here
+}
+
+type Handlers struct {
+	TenantHandler tenant.TenantHandler
+	// Other handlers here
+}
+
+var wireDeps = func(
+	ctx context.Context,
+	db *Database,
+	isDev bool,
+	logLevel logger.LogLevel,
+) (Dependencies, error) {
 	deps := Dependencies{}
 
-	cfg := wireConfig()
-	l, err := wireLogger(cfg.IsDevelopment(), cfg.Logger.Level)
+	l, err := wireLogger(isDev, logLevel)
 	if err != nil {
-		return Dependencies{}, err
+		return Dependencies{}, fmt.Errorf("failed to create logger: %w", err)
 	}
 
-	deps.config = cfg
+	repos, err := wireRepos(db.pool, l)
+	if err != nil {
+		return Dependencies{}, fmt.Errorf("failed to create repositories: %w", err)
+	}
+
+	services, err := wireServices(repos, l)
+	if err != nil {
+		return Dependencies{}, fmt.Errorf("failed to create services: %w", err)
+	}
+
+	handlers, err := wireHandlers(services, l)
+	if err != nil {
+		return Dependencies{}, fmt.Errorf("failed to create handlers: %w", err)
+	}
+
 	deps.Logger = l
-
+	deps.Repos = repos
+	deps.Services = services
+	deps.Handlers = handlers
 	return deps, nil
-}
-
-var wireConfig = func () config.Config {
-	cfg, err := config.NewConfig()
-	if err != nil {
-		fmt.Println("Error loading config:", err)
-		fmt.Println("Fallback to default config")
-		cfg = config.DefaultConfig() // TODO: implement actual logic
-	}
-	return cfg
 }
 
 var wireLogger = func(isDevelopment bool, level logger.LogLevel) (logger.Logger, error) {
@@ -47,28 +74,54 @@ var wireLogger = func(isDevelopment bool, level logger.LogLevel) (logger.Logger,
 	return l, nil
 }
 
-var createPool = func(ctx context.Context, dbURL string) (*pgxpool.Pool, error) {
-	pool, err := pgxpool.New(ctx, dbURL)
+var wireRepos = func(conn db.DBTX, l logger.Logger) (Repositories, error) {
+	tr, err := wireTenantRepository(conn, l)
 	if err != nil {
-		return nil, err
+		return Repositories{}, err
 	}
-	return pool, nil
+	return Repositories{
+		TenantRepository: tr,
+	}, nil
 }
 
-var createTenantRepo = func(pool *pgxpool.Pool) tenant.TenantRepository {
-	return tenant.NewTenantRepository(pool)
+var wireServices = func(repos Repositories, l logger.Logger) (Services, error) {
+	ts, err := wireTenantService(repos.TenantRepository, l)
+	if err != nil {
+		return Services{}, err
+	}
+	return Services{
+		TenantService: ts,
+	}, nil
+}
+
+var wireHandlers = func(services Services, l logger.Logger) (Handlers, error) {
+	th, err := wireTenantHandler(services.TenantService, l)
+	if err != nil {
+		return Handlers{}, err
+	}
+	return Handlers{
+		TenantHandler: th,
+	}, nil
+}
+
+var wireTenantRepository = func(conn db.DBTX, l logger.Logger) (tenant.TenantRepository, error) {
+	if conn == nil {
+		return nil, fmt.Errorf("conn is nil")
+	}
+	tenantRepo := tenant.NewTenantRepository(conn, l)
+	return tenantRepo, nil
 }
 
 func (d Dependencies) getLogger() logger.Logger {
 	return d.Logger
 }
 
-func (d Dependencies) cleanup() error {
-	if d.dbPool != nil {
-		err := d.dbPool.Close()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+var wireTenantService = func(repo tenant.TenantRepository, l logger.Logger) (tenant.TenantService, error) {
+	ts := tenant.NewTenantService(repo, l)
+	return ts, nil
+}
+
+var wireTenantHandler = func(service tenant.TenantService, l logger.Logger) (tenant.TenantHandler, error) {
+	th := tenant.NewTenantHandler(service, l)
+	return th, nil
 }
