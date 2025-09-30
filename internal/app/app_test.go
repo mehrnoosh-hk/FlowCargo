@@ -17,15 +17,15 @@ func TestAppCreateAndRun(t *testing.T) {
 		defer func() {
 			wireDeps = original
 		}()
-		
-		wireDeps = func(ctx context.Context,db *Database, isDev bool, level logger.LogLevel) (Dependencies, error) {
+
+		wireDeps = func(ctx context.Context, db *Database, isDev bool, level logger.LogLevel) (Dependencies, error) {
 			return Dependencies{}, errors.New("test error")
 		}
-		
+
 		err := CreateAndRun(testCtx, "path")
-		require.Error(t, err)		
+		require.Error(t, err)
 	})
-	
+
 	t.Run("Creates the application, if all wire functions succeed", func(t *testing.T) {
 		testCtx := context.Background()
 		originalDeps := wireDeps
@@ -38,20 +38,20 @@ func TestAppCreateAndRun(t *testing.T) {
 			wireCfg = originalCfg
 			wireSrv = originalSrv
 		}()
-		
+
 		wireDeps = func(ctx context.Context, db *Database, isDev bool, level logger.LogLevel) (Dependencies, error) {
 			return Dependencies{}, nil
 		}
-		
+
 		wireDB = func(ctx context.Context, dbURL string) (*Database, error) {
 			return &Database{}, nil
 		}
-		
-		wireCfg = func() (config.Config) {
+
+		wireCfg = func(ctx context.Context, path *string) config.Config {
 			return config.Config{}
 		}
-				
-		_, err := newApp(testCtx, wireCfg, wireDB, wireDeps, wireSrv)
-		require.NoError(t, err)	
+
+		_, err := newApp(testCtx, nil, wireCfg, wireDB, wireDeps, wireSrv)
+		require.NoError(t, err)
 	})
 }

@@ -4,26 +4,31 @@ import (
 	"errors"
 )
 
-
 type Config struct {
-	Env Environment `json:"env"`
-	Server Server `json:"server"`
-	Database Database `json:"database"`
-	Logger Logger `json:"logger"`
+	Env      Environment `json:"env"`
+	Server   Server      `json:"server"`
+	Database Database    `json:"database"`
+	Logger   Logger      `json:"logger"`
 }
 
 type Environment string
 
 const (
-	Dev Environment = "dev"
+	Dev  Environment = "dev"
 	Test Environment = "test"
 	Prod Environment = "prod"
 )
 
-func NewConfigOrDefault() (Config) {
+// NewConfigOrDefault creates tries to create a Config instance from provided environment path.
+// If the path is empty, it will use the default environment.
+func NewConfigOrDefault(envPath *string) Config {
+	// TODO: Implement loading config from file
 	// Try to load config from file
 	// config, err := NewConfig()
-	err := errors.New("error loading config")
+	if envPath == nil || *envPath == "" {
+		return DefaultConfig()
+	}
+	err := errors.New("error loading config") // TODO: Remove after actual implementation
 	if err != nil {
 		return DefaultConfig()
 	}
@@ -43,7 +48,7 @@ func DefaultConfig() Config {
 			Port:     "5432",
 			User:     "postgres",
 			Password: "password",
-			Name: "flowcargo_dev",
+			Name:     "flowcargo_dev",
 		},
 		Logger: Logger{
 			Level:  "INFO",

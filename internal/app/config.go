@@ -1,9 +1,10 @@
 package app
 
 import (
+	"context"
 	"flowcargo/internal/shared/config"
 )
 
-var wireCfg = func () config.Config {
-	return config.NewConfigOrDefault()
+var wireCfg = func(ctx context.Context, path *string) config.Config {
+	return config.NewConfigOrDefault(path)
 }

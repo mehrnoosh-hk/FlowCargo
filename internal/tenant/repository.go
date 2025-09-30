@@ -18,14 +18,14 @@ type TenantRepository interface {
 }
 
 type tenantRepository struct {
-	l  logger.Logger
+	l       logger.Logger
 	queries *db.Queries // This can accept both pool and tx
 }
 
 // NewTenantRepository accepts both pool and tx
 func NewTenantRepository(conn db.DBTX, l logger.Logger) TenantRepository {
 	return &tenantRepository{
-		l:  l,
+		l:       l,
 		queries: db.New(conn),
 	}
 }
@@ -82,8 +82,4 @@ func DatabaseTenantToDomain(t db.Tenant) Tenant {
 		CreatedAt: t.CreatedAt,
 		UpdatedAt: t.UpdatedAt,
 	}
-}
-
-func DomainCreateParamToDBCreateParam(p CreateTenantParams) db.CreateTenantParams {
-	return db.CreateTenantParams{}
 }

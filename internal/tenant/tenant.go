@@ -20,12 +20,13 @@ type Tenant struct {
 type CreateTenantParams struct {
 	Name   string  `json:"name" validate:"required,min=2,max=100"`
 	Email  string  `json:"email" validate:"required,email"`
-	Domain *string `json:"domain" validate:"required,url"`
+	Domain *string `json:"domain" validate:"omitempty,url"`
 }
+
 type UpdateTenantParams struct {
 	ID       uuid.UUID `json:"id" validate:"required"`
-	Name     *string    `json:"name" validate:"min=2,max=100"`
-	Email    *string    `json:"email" validate:"email"`
-	Domain   *string    `json:"domain" validate:"url"`
-	IsActive *bool      `json:"is_active"`
+	Name     *string   `json:"name" validate:"omitempty,min=2,max=100"`
+	Email    *string   `json:"email" validate:"omitempty,email"`
+	Domain   *string   `json:"domain" validate:"omitempty,url"`
+	IsActive *bool     `json:"is_active" validate:"omitempty,boolean"`
 }

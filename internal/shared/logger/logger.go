@@ -11,6 +11,7 @@ import (
 
 type Logger struct {
 	*logrus.Logger
+	out *os.File
 }
 
 type LogLevel string
@@ -29,6 +30,7 @@ func NewLogger(isDevelopment bool, level LogLevel) (Logger, error) {
 		return Logger{}, err
 	}
 	logger.SetLevel(lvl)
+	var outFile *os.File
 	if isDevelopment {
 		cwd, err := os.Getwd()
 		if err != nil {
@@ -48,12 +50,19 @@ func NewLogger(isDevelopment bool, level LogLevel) (Logger, error) {
 			},
 		})
 		logger.SetReportCaller(true)
-		file, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+		outFile, err := os.OpenFile("app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 		if err == nil {
-			logger.SetOutput(file)
+			logger.SetOutput(outFile)
 		} else {
 			logger.Info("failed to log to file, using default stderr")
 		}
 	}
-	return Logger{logger}, nil
+	return Logger{logger, outFile}, nil
+}
+
+func (l Logger) Close() error {
+	if l.out != nil {
+		return l.out.Close()
+	}
+	return nil
 }

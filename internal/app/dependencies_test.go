@@ -1,10 +1,10 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"flowcargo/internal/shared/logger"
 	"testing"
-	"context"
 
 	"github.com/stretchr/testify/require"
 )
@@ -22,7 +22,7 @@ func TestDependenciesWiring(t *testing.T) {
 		_, err := wireDeps(testCtx, &Database{}, true, logger.Debug)
 		require.Error(t, err)
 	})
-	
+
 	t.Run("wireDeps succeeds when wireLogger succeeds", func(t *testing.T) {
 		testCtx := context.Background()
 		original := wireLogger
@@ -32,7 +32,7 @@ func TestDependenciesWiring(t *testing.T) {
 		wireLogger = func(isDevelopment bool, level logger.LogLevel) (logger.Logger, error) {
 			return logger.Logger{}, nil
 		}
-		_, err := wireDeps(testCtx,  &Database{}, true, logger.Debug)
+		_, err := wireDeps(testCtx, &Database{}, true, logger.Debug)
 		require.NoError(t, err)
 	})
 }

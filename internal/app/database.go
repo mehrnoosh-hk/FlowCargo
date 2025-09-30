@@ -14,6 +14,10 @@ var wireDB = func(ctx context.Context, dbURL string) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
+	err = pool.Ping(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return &Database{pool: pool}, nil
 }
 

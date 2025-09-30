@@ -2,9 +2,11 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"flowcargo/internal/shared/config"
 	"flowcargo/internal/shared/logger"
@@ -17,11 +19,11 @@ type App struct {
 	srv  Server
 }
 
-type wireConfig = func() config.Config
+type wireConfig = func(ctx context.Context, path *string) config.Config
 
 // wireDB is a function that wires up the database dependency for the application.
 // It helps for creating alternative implementations of the database dependency. (especially for testing)
-type wireDataBase = func(ctx context.Context, URL string) (*Database, error)
+type wireDatabase = func(ctx context.Context, URL string) (*Database, error)
 
 // wireDeps is a function that wires up the dependencies for the application.
 // It helps for creating alternative implementations of the dependencies. (especially for testing)
@@ -36,6 +38,7 @@ type wireServer = func(address string, handlers Handlers) Server
 func CreateAndRun(ctx context.Context, envPath string) error {
 	app, err := newApp(
 		ctx,
+		&envPath,
 		wireCfg,
 		wireDB,
 		wireDeps,
@@ -46,19 +49,21 @@ func CreateAndRun(ctx context.Context, envPath string) error {
 	}
 	app.Logger().Info("Application created successfully!")
 	app.Logger().Infof("Env: %s", envPath)
-	return app.runApp()
+	return app.runApp(ctx)
 }
 
 // newApp is a factory function that creates a new App instance with all dependencies.
 // By replacing the passing functions, you can change the implementation of the App
 func newApp(
 	ctx context.Context,
+	path *string,
 	fConfig wireConfig,
-	fDB wireDataBase,
+	fDB wireDatabase,
 	fDeps wireDependencies,
 	fServer wireServer,
 ) (App, error) {
-	cfg := fConfig()
+	// TODO: Crutial implementation resource clean up if error occurs
+	cfg := fConfig(ctx, path)
 	db, err := fDB(ctx, cfg.GetDatabaseURL())
 	if err != nil {
 		return App{}, err
@@ -79,7 +84,7 @@ func newApp(
 
 // runApp starts all the resources and runs the application.
 // It waits for the application to finish.
-func (a App) runApp() error {
+func (a App) runApp(ctx context.Context) error {
 	// Start server in a goroutine so it doesn't block
 	go func() {
 		if err := a.srv.start(); err != nil && err != http.ErrServerClosed {
@@ -88,12 +93,12 @@ func (a App) runApp() error {
 	}()
 
 	a.Logger().Infof("Server started successfully! Listening on address %s", a.srv.getAddress())
-	return a.waitForShutdown(context.Background())
+	return a.waitForShutdown(ctx)
 }
 
 func (a App) waitForShutdown(ctx context.Context) error {
 	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt)
+	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 
 	select {
 	case <-quit:
@@ -108,12 +113,16 @@ func (a App) waitForShutdown(ctx context.Context) error {
 // shutdown stops all the resources.
 func (a App) shutdown(ctx context.Context) error {
 	// TODO: Implement dependencies and resources cleanup
-	a.db.Close()
+	a.db.Close() // Does not return an error, and waits for acquired connections to be released
 	err := a.srv.shutdown(ctx)
 	if err != nil {
 		return err
 	}
-	a.Logger().Info("Resources released successfully!")
+	err = a.Logger().Close()
+	if err != nil {
+		return err
+	}
+	fmt.Println("Resources cleaned successfully")
 	return nil
 }
 

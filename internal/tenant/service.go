@@ -9,20 +9,20 @@ import (
 )
 
 type TenantService interface {
-    CreateTenant(ctx context.Context, params CreateTenantParams) (*Tenant, error)
-    GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
+	CreateTenant(ctx context.Context, params CreateTenantParams) (*Tenant, error)
+	GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
 	UpdateTenant(ctx context.Context, id uuid.UUID, params UpdateTenantParams) (*Tenant, error)
-	DeleteTenant(ctx context.Context, id uuid.UUID) (*Tenant, error)
+	SoftDeleteTenant(ctx context.Context, id uuid.UUID) (*Tenant, error)
 }
 
-type tenantService struct{
-	l logger.Logger
+type tenantService struct {
+	l          logger.Logger
 	tenantRepo TenantRepository
 }
 
 func NewTenantService(tenantRepo TenantRepository, l logger.Logger) TenantService {
-    return &tenantService{
-		l: l,
+	return &tenantService{
+		l:          l,
 		tenantRepo: tenantRepo,
 	}
 }
@@ -40,13 +40,12 @@ func (ts *tenantService) UpdateTenant(ctx context.Context, id uuid.UUID, params 
 	return ts.tenantRepo.UpdateTenant(ctx, params)
 }
 
-func (ts *tenantService) DeleteTenant(ctx context.Context, id uuid.UUID) (*Tenant, error) {
-	ts.l.Info("Deleting tenant: ", "id = ", id)
+func (ts *tenantService) SoftDeleteTenant(ctx context.Context, id uuid.UUID) (*Tenant, error) {
 	isActive := false
 	params := UpdateTenantParams{
 		ID:       id,
 		IsActive: &isActive,
 	}
-	ts.l.Info("Deleting tenant params: ", "params = ", params)
+	ts.l.Info("Deleting tenant params: ", "id = ", id)
 	return ts.tenantRepo.UpdateTenant(ctx, params)
 }
