@@ -17,14 +17,15 @@ import (
 )
 
 var (
-    once       sync.Once
-    dbManager  *TestDBManager
-    initError  error
+	once      sync.Once
+	dbManager *TestDBManager
+	initError error
 )
 
 // TestDB interface defines methods for interacting with a test database
 type TestDB interface {
-	BeginTx(ctx context.Context, t *testing.T) (*pgx.Tx, error)
+	GetPool() *pgxpool.Pool
+	BeginTx(ctx context.Context, t *testing.T) pgx.Tx
 	Close()
 }
 
@@ -38,10 +39,10 @@ type TestDBManager struct {
 	closed      bool
 }
 
-func GetDBManager() *TestDBManager {
+func GetDBManager() TestDB {
 	once.Do(func() {
 		dbManager = NewTestDBManager(GetTestDSN())
-        initError = dbManager.Initialize()
+		initError = dbManager.Initialize()
 	})
 	return dbManager
 }
@@ -98,9 +99,9 @@ func (m *TestDBManager) BeginTx(ctx context.Context, t *testing.T) pgx.Tx {
 	if t != nil {
 		t.Helper()
 	}
-	
+
 	db := m.getDB(t)
-	
+
 	tx, err := db.Begin(ctx)
 	if err != nil {
 		if t != nil {
@@ -108,7 +109,7 @@ func (m *TestDBManager) BeginTx(ctx context.Context, t *testing.T) pgx.Tx {
 		}
 		panic(err)
 	}
-	
+
 	return tx
 }
 
@@ -139,12 +140,12 @@ func (m *TestDBManager) getDB(t *testing.T) *pgxpool.Pool {
 		panic("Database not properly initialized")
 	}
 
-	return m.db	
+	return m.db
 }
 
 // Close shuts down the database connection
 func (m *TestDBManager) Close() {
-	
+
 	// Run down migrations
 	err := migrateDatabase(m.dsn, false) // TODO: make sure wether it is required or not
 	if err != nil {
@@ -172,11 +173,10 @@ func GetTestDSN() string {
 }
 
 func migrateDatabase(URL string, up bool) error {
-	// Get the directory of this source file
-	_, filename, _, _ := runtime.Caller(0)
-	sourceDir := filepath.Dir(filename)
-	// Go up one level to project root, then to migrations
-	migrationsPath := filepath.Join(sourceDir, "..", "migrations")
+	migrationsPath, err := findMigrationsDir()
+	if err != nil {
+		return fmt.Errorf("failed to find migrations directory: %w", err)
+	}
 	migrationsURL := "file://" + migrationsPath
 
 	m, err := migrate.New(migrationsURL, URL)
@@ -184,16 +184,56 @@ func migrateDatabase(URL string, up bool) error {
 		return fmt.Errorf("failed to create migrate instance: %w", err)
 	}
 	defer m.Close()
-		
+
 	if up {
 		if err := m.Up(); err != nil && err != migrate.ErrNoChange {
 			return fmt.Errorf("failed to run migrations: %w", err)
 		}
-		return nil	
+		return nil
 	}
 
 	if err := m.Drop(); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("failed to run migrations: %w", err)
 	}
 	return nil
+}
+
+// findMigrationsDir searches for the migrations directory by walking up the directory tree
+// It looks for a directory containing both go.mod (project root) and migrations folder
+func findMigrationsDir() (string, error) {
+	// Get the directory of this source file
+	_, filename, _, ok := runtime.Caller(1)
+	if !ok {
+		return "", fmt.Errorf("failed to get caller information")
+	}
+
+	currentDir := filepath.Dir(filename)
+
+	// Walk up the directory tree
+	for {
+		// Check if go.mod exists in current directory (indicates project root)
+		goModPath := filepath.Join(currentDir, "go.mod")
+		if _, err := os.Stat(goModPath); err == nil {
+			// Found project root, now check for migrations directory
+			migrationsPath := filepath.Join(currentDir, "migrations")
+			if _, err := os.Stat(migrationsPath); err == nil {
+				return migrationsPath, nil
+			}
+			return "", fmt.Errorf("go.mod found at %s but migrations directory not found", currentDir)
+		}
+
+		// Move up one directory
+		parentDir := filepath.Dir(currentDir)
+
+		// Check if we've reached the filesystem root
+		if parentDir == currentDir {
+			return "", fmt.Errorf("reached filesystem root without finding go.mod and migrations directory")
+		}
+
+		currentDir = parentDir
+	}
+}
+
+func (m *TestDBManager) GetPool() *pgxpool.Pool {
+	return m.db
 }
