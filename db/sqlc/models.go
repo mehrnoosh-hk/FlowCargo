@@ -5,6 +5,8 @@
 package db
 
 import (
+	"time"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -21,7 +23,7 @@ type Tenant struct {
 	// Whether the tenant is active and can access the system
 	IsActive bool `json:"is_active"`
 	// Timestamp when the tenant was created
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	CreatedAt time.Time `json:"created_at"`
 	// Timestamp when the tenant was last updated
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

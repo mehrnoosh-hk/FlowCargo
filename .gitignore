@@ -22,4 +22,19 @@ go.work
 go.work.sum
 
 # env file
-.env.dev
+# .env.dev
+
+# AI files and folders
+.gemini/
+
+# Test coverage files
+coverage.out
+coverage.html
+coverage.html.out
+coverage.xml
+coverage.html.xml
+
+# Temporary files
+temp.*
+temp_*.*
+*.temp

@@ -1,3 +1,5 @@
+BEGIN;
+
 -- Create tenants table for multi-tenant architecture
 -- This table stores information about each tenant in the system
 
@@ -38,3 +40,5 @@ COMMENT ON COLUMN tenants.domain IS 'Optional domain for subdomain-based multi-t
 COMMENT ON COLUMN tenants.is_active IS 'Whether the tenant is active and can access the system';
 COMMENT ON COLUMN tenants.created_at IS 'Timestamp when the tenant was created';
 COMMENT ON COLUMN tenants.updated_at IS 'Timestamp when the tenant was last updated';
+
+COMMIT;
