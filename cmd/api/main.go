@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"flowcargo/internal/app"
+	"fmt"
+	"os"
 )
 
 func main() {
@@ -12,6 +13,6 @@ func main() {
 	err := app.CreateAndRun(ctx, "./.env.dev")
 	if err != nil {
 		fmt.Println("Error:", err)
-		return
+		os.Exit(1)
 	}
 }
