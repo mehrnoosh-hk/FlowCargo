@@ -5,77 +5,50 @@ import (
 	"os"
 	"testing"
 
-	testutils "flowcargo/db"
-	"flowcargo/internal/shared/logger"
+	testutils "flowcargo/db/testutils"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
-type TestHelper struct {
-	TX     pgx.Tx
-	Repo   TenantRepository
-	Logger logger.Logger
-}
-
-var testDBManager *testutils.TestDBManager
-
 // TestMain sets up and tears down the test database
 func TestMain(m *testing.M) {
-	// Create test database manager and assign it to global variable
-	DBManager := testutils.NewTestDBManager(testutils.GetTestDSN())
-	testDBManager = DBManager
-
-	// Initialize database
-	if err := testDBManager.Initialize(); err != nil {
-		panic("Failed to initialize test database: " + err.Error())
-	}
+	
+	manager := testutils.GetDBManager()
 
 	// Run tests
 	code := m.Run()
 
 	// Clean shutdown
-	if testDBManager != nil {
-		testDBManager.Close()
+	if manager != nil {
+		manager.Close()
 	}
 	os.Exit(code)
-}
-
-// repository_test.go - TESTING
-func NewTenantTestHelper(ctx context.Context, t *testing.T) *TestHelper {
-	t.Helper()
-	db := testDBManager.GetDB(t) // Get the pool
-	tx, err := db.Begin(ctx)
-	require.NoError(t, err)
-	logger, err := logger.NewLogger(false, logger.Debug)
-	require.NoError(t, err)
-	repo := NewTenantRepository(tx, logger) // Use transaction, not pool
-	t.Cleanup(func(){
-		err := tx.Rollback(ctx)
-		require.NoError(t, err)
-	})
-	return &TestHelper{
-		Repo:   repo,
-		Logger: logger,
-	}
 }
 
 func TestTenantRepository(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("create tenant with correct data without domain", func(t *testing.T) {
-		helper := NewTenantTestHelper(ctx, t)
-		tenant, err := helper.Repo.CreateTenant(ctx, CreateTenantParams{
-			Name:   "John",
-			Email:  "John_Doe_test_1@test.com",
-			Domain: nil,
-		})
+		helper := NewTenantTestHelper(ctx, t, nil)
+		fixture := NewTenantFixture(helper.Repo)
+		tenant, err := fixture.Tenant().WithName("John Doe").WithEmail("john@test.com").Create(ctx)
 		require.NoError(t, err)
 		require.NotEmpty(t, tenant.ID)
 	})
+	
+	t.Run("Create a new tenanr repository instance with pool", func(t *testing.T) {
+		helper := NewTenantTestHelper(ctx, t, nil)
+		require.NotNil(t, helper.Pool)
+		require.NotNil(t, helper.Logger)
+		repo := NewTenantRepository(helper.Pool, helper.Logger)
+		require.NotNil(t, repo)		
+	})
+	
+	
 
 	t.Run("create tenant with correct data with domain", func(t *testing.T) {
-		helper := NewTenantTestHelper(ctx, t)
+		helper := NewTenantTestHelper(ctx, t, nil)
 		domain := "test.com"
 		tenant, err := helper.Repo.CreateTenant(ctx, CreateTenantParams{
 			Name:   "John",
@@ -87,7 +60,7 @@ func TestTenantRepository(t *testing.T) {
 	})
 	
 	t.Run("Can not create two tenants with same email", func(t *testing.T) {
-		helper := NewTenantTestHelper(ctx, t)
+		helper := NewTenantTestHelper(ctx, t, nil)
 		email := "John_Doe_test_3@test.com"
 		_, err := helper.Repo.CreateTenant(ctx, CreateTenantParams{
 			Name:   "John",
@@ -103,11 +76,10 @@ func TestTenantRepository(t *testing.T) {
 		})
 		require.Error(t, err)
 		t.Log(err)
-		// require.ErrorIs(t, err, ErrDuplicateEmail)
 	})
 	
 	t.Run("Update an existing tenant", func(t *testing.T) {
-		helper := NewTenantTestHelper(ctx, t)
+		helper := NewTenantTestHelper(ctx, t, nil)
 		email := "John_Doe_test_4@test.com"
 		tenant, err := helper.Repo.CreateTenant(ctx, CreateTenantParams{
 			Name:   "John",
@@ -136,7 +108,7 @@ func TestTenantRepository(t *testing.T) {
 	})
 	
 	t.Run("Update only one column of an existing tenanat", func(t *testing.T) {
-		helper := NewTenantTestHelper(ctx, t)
+		helper := NewTenantTestHelper(ctx, t, nil)
 		email := "John_Doe_test_4@test.com"
 		tenant, err := helper.Repo.CreateTenant(ctx, CreateTenantParams{
 			Name:   "John",
@@ -158,5 +130,42 @@ func TestTenantRepository(t *testing.T) {
 		require.Equal(t, "John Doe", updatedTenant.Name)
 		require.Nil(t, updatedTenant.Domain)
 	})
-
+	
+	t.Run("Can not update a tenant which is not exist", func(t *testing.T) {
+		helper := NewTenantTestHelper(ctx, t, nil)
+		name := "John Doe"
+		updatedTenant, err := helper.Repo.UpdateTenant(ctx, UpdateTenantParams{
+			ID:     uuid.New(),
+			Name:   &name,
+		})
+		require.Error(t, err)
+		require.Empty(t, updatedTenant, "The tenant object should be an empty struct")
+	})
+	
+	t.Run("Get a tenant by ID", func(t *testing.T) {
+		helper := NewTenantTestHelper(ctx, t, nil)
+		email := "John_Doe_test_4@test.com"
+		tenant, err := helper.Repo.CreateTenant(ctx, CreateTenantParams{
+			Name:   "John",
+			Email:  email,
+			Domain: nil,
+		})
+		require.NoError(t, err)
+		require.NotEmpty(t, tenant.ID)
+		
+		tenantByID, err := helper.Repo.GetTenantByID(ctx, tenant.ID)
+		require.NoError(t, err)
+		require.Equal(t, tenant.ID, tenantByID.ID)
+		require.Equal(t, tenant.Name, tenantByID.Name)
+		require.Equal(t, tenant.Email, tenantByID.Email)
+		require.Equal(t, tenant.Domain, tenantByID.Domain)
+	})
+	
+	t.Run("Get tenant by ID for non existing tenant", func(t *testing.T) {
+		helper := NewTenantTestHelper(ctx, t, nil)
+		ID := uuid.New()
+		tenant, err := helper.Repo.GetTenantByID(ctx, ID)
+		require.Error(t, err)
+		require.Nil(t, tenant)
+	})
 }
