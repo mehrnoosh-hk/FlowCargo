@@ -22,6 +22,10 @@ go.work
 go.work.sum
 
 # env file
+<<<<<<< Updated upstream
+=======
+.env
+>>>>>>> Stashed changes
 # .env.dev
 
 # AI files and folders
@@ -37,4 +41,11 @@ coverage.html.xml
 # Temporary files
 temp.*
 temp_*.*
+<<<<<<< Updated upstream
 *.temp
+=======
+*.temp
+
+# TODO files
+TODO.md
+>>>>>>> Stashed changes
