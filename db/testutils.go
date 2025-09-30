@@ -6,27 +6,50 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// TestDBManager encapsulates all database management logic
+var (
+    once       sync.Once
+    dbManager  *TestDBManager
+    initError  error
+)
+
+// TestDB interface defines methods for interacting with a test database
+type TestDB interface {
+	BeginTx(ctx context.Context, t *testing.T) (*pgx.Tx, error)
+	Close()
+}
+
+// TestDBManager implements the TestDB interface
+// encapsulates all database management logic
 type TestDBManager struct {
 	// Private fields - encapsulated state
-	db          *pgxpool.Pool
 	dsn         string
+	db          *pgxpool.Pool
 	initialized bool
 	closed      bool
 }
 
+func GetDBManager() *TestDBManager {
+	once.Do(func() {
+		dbManager = NewTestDBManager(GetTestDSN())
+        initError = dbManager.Initialize()
+	})
+	return dbManager
+}
+
 func NewTestDBManager(dsn string) *TestDBManager {
 	return &TestDBManager{
-		db:          nil,
 		dsn:         dsn,
+		db:          nil,
 		initialized: false,
 		closed:      false,
 	}
@@ -71,13 +94,28 @@ func (m *TestDBManager) Initialize() error {
 	return initErr
 }
 
-// GetDB returns the database connection, initializing if necessary
-func (m *TestDBManager) GetDB(t *testing.T) *pgxpool.Pool {
+func (m *TestDBManager) BeginTx(ctx context.Context, t *testing.T) pgx.Tx {
 	if t != nil {
 		t.Helper()
 	}
+	
+	db := m.getDB(t)
+	
+	tx, err := db.Begin(ctx)
+	if err != nil {
+		if t != nil {
+			t.Fatalf("Failed to begin transaction: %v", err)
+		}
+		panic(err)
+	}
+	
+	return tx
+}
 
-	// Initialize if needed
+func (m *TestDBManager) getDB(t *testing.T) *pgxpool.Pool {
+	if t != nil {
+		t.Helper()
+	}
 	if !m.initialized {
 		if err := m.Initialize(); err != nil {
 			if t != nil {
@@ -101,14 +139,17 @@ func (m *TestDBManager) GetDB(t *testing.T) *pgxpool.Pool {
 		panic("Database not properly initialized")
 	}
 
-	return m.db
+	return m.db	
 }
 
 // Close shuts down the database connection
 func (m *TestDBManager) Close() {
 	
 	// Run down migrations
-	// migrateDatabase(m.dsn, false) // TODO: make sure wether it is required or not
+	err := migrateDatabase(m.dsn, false) // TODO: make sure wether it is required or not
+	if err != nil {
+		fmt.Printf("Failed to run down migrations: %v\n", err)
+	}
 
 	if m.db != nil {
 		fmt.Println("Closing test database connection...")
