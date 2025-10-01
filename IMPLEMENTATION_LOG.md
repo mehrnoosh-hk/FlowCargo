@@ -49,7 +49,7 @@ npx create-next-app@latest frontend --typescript --tailwind --eslint --app --src
 3. Installed dependencies manually:
    - Core: `next@latest react@latest react-dom@latest`
    - TypeScript: `typescript @types/react @types/node @types/react-dom`
-   - Tools: `tailwindcss@^3.4.1 postcss autoprefixer eslint eslint-config-next`
+   - Tools: `tailwindcss@^3.4.17 postcss autoprefixer eslint eslint-config-next`
 
 **Result**: ✅ All dependencies installed successfully
 
@@ -89,8 +89,8 @@ frontend/
 **Issue #2: Tailwind CSS v4 Incompatibility**
 - **Error**: `Error: It looks like you're trying to use 'tailwindcss' directly as a PostCSS plugin`
 - **Cause**: Tailwind v4.1.13 was installed (breaking changes)
-- **Fix**: Downgraded to `tailwindcss@^3.4.1`
-- **Command**: `npm uninstall tailwindcss && npm install -D tailwindcss@^3.4.1`
+- **Fix**: Downgraded to `tailwindcss@^3.4.17`
+- **Command**: `npm uninstall tailwindcss && npm install -D tailwindcss@^3.4.17`
 
 **Issue #3: Missing Pages**
 - **Error**: 404 errors, no pages to render
@@ -163,7 +163,7 @@ Route (app)                                 Size  First Load JS
 - @types/node@24.6.0
 - @types/react@19.1.16
 - @types/react-dom@19.1.9
-- tailwindcss@3.4.1
+- tailwindcss@3.4.17
 - postcss@8.5.6
 - autoprefixer@10.4.21
 - eslint@9.36.0
@@ -188,7 +188,7 @@ Route (app)                                 Size  First Load JS
 - Easier refactoring
 - Industry standard for React projects
 
-### 3. Tailwind CSS v3.4.1 (Not v4)
+### 3. Tailwind CSS v3.4.17 (Not v4)
 **Rationale**:
 - Stable and well-documented
 - Compatible with current PostCSS setup
@@ -395,7 +395,7 @@ git commit -m "feat: initialize Next.js frontend with TypeScript and Tailwind CS
 
 - Created frontend directory with Next.js 15 and App Router
 - Configured TypeScript with strict mode and path aliases
-- Set up Tailwind CSS v3.4.1 with PostCSS
+- Set up Tailwind CSS v3.4.17 with PostCSS
 - Added ESLint with Next.js configuration
 - Created basic home page and root layout
 - Configured environment variables for API communication

@@ -81,7 +81,7 @@ NODE_ENV=development
 
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript 5
-- **Styling**: Tailwind CSS 3.4.1
+- **Styling**: Tailwind CSS 3.4.17
 - **Components**: shadcn/ui (to be installed in Phase 2)
 
 ---

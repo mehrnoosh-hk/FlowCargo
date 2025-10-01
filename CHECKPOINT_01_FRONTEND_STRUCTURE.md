@@ -55,7 +55,7 @@ FlowCargo/frontend/
 - `@types/node@^24.6.0` - Node.js type definitions
 - `@types/react@^19.1.16` - React type definitions
 - `@types/react-dom@^19.1.9` - React DOM type definitions
-- `tailwindcss@^3.4.1` - Tailwind CSS (v3, not v4)
+- `tailwindcss@^3.4.17` - Tailwind CSS (v3, not v4)
 - `postcss@^8.5.6` - PostCSS
 - `autoprefixer@^10.4.21` - Autoprefixer plugin
 - `eslint@^9.36.0` - ESLint
@@ -121,7 +121,7 @@ NODE_ENV=development
 ### Issue 3: Tailwind CSS v4 Compatibility
 **Problem**: Tailwind CSS v4 was installed, which has breaking changes with PostCSS configuration.  
 **Error**: `Error: It looks like you're trying to use 'tailwindcss' directly as a PostCSS plugin`  
-**Solution**: Downgraded to Tailwind CSS v3.4.1 which is stable and compatible with current Next.js setup.
+**Solution**: Downgraded to Tailwind CSS v3.4.17 which is stable and compatible with current Next.js setup.
 
 ### Issue 4: Build Failures
 **Problem**: Initial builds failed due to missing pages and Tailwind issues.  
@@ -163,7 +163,7 @@ npm run dev
 ### What Works
 - ✅ Next.js 15 with App Router
 - ✅ TypeScript with strict mode
-- ✅ Tailwind CSS v3.4.1
+- ✅ Tailwind CSS v3.4.17
 - ✅ ESLint configuration
 - ✅ Environment variables
 - ✅ Basic home page rendering
@@ -190,7 +190,7 @@ npm run dev
 | Next.js | 15.5.4 | React framework with SSR |
 | React | 19.1.1 | UI library |
 | TypeScript | 5.9.2 | Type safety |
-| Tailwind CSS | 3.4.1 | Utility-first CSS |
+| Tailwind CSS | 3.4.17 | Utility-first CSS |
 | Node.js | 20+ | JavaScript runtime |
 | npm | 11.6.0 | Package manager |
 
@@ -362,7 +362,7 @@ git commit -m "feat: initialize Next.js frontend with TypeScript and Tailwind CS
 
 - Created frontend directory with Next.js 15 and App Router
 - Configured TypeScript with strict mode and path aliases
-- Set up Tailwind CSS v3.4.1 with PostCSS
+- Set up Tailwind CSS v3.4.17 with PostCSS
 - Added ESLint with Next.js configuration
 - Created basic home page and root layout
 - Configured environment variables for API communication
