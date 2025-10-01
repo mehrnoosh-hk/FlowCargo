@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function HomePage() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-8">
@@ -10,7 +12,7 @@ export default function HomePage() {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-          <a
+          <Link
             href="/admin"
             className="p-8 border border-foreground/20 rounded-lg hover:border-foreground/40 transition-colors"
           >
@@ -18,9 +20,9 @@ export default function HomePage() {
             <p className="text-foreground/60">
               Manage tenants, shipments, and system configuration
             </p>
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/tracking"
             className="p-8 border border-foreground/20 rounded-lg hover:border-foreground/40 transition-colors"
           >
@@ -28,12 +30,15 @@ export default function HomePage() {
             <p className="text-foreground/60">
               Track your shipments in real-time
             </p>
-          </a>
+          </Link>
         </div>
 
         <div className="mt-12 p-6 bg-foreground/5 rounded-lg">
           <p className="text-sm text-foreground/60">
-            Backend API: <code className="px-2 py-1 bg-foreground/10 rounded">{process.env.NEXT_PUBLIC_API_URL}</code>
+            Backend API:{" "}
+            <code className="px-2 py-1 bg-foreground/10 rounded">
+              {process.env.NEXT_PUBLIC_API_URL}
+            </code>
           </p>
         </div>
       </div>
