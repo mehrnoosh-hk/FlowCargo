@@ -21,8 +21,10 @@ func TestAppCreateAndRun(t *testing.T) {
 		wireDeps = func(ctx context.Context, db *Database, isDev bool, level logger.LogLevel) (Dependencies, error) {
 			return Dependencies{}, errors.New("test error")
 		}
+		configFile := "path"
+		env := config.Development
 
-		err := CreateAndRun(testCtx, "path")
+		err := CreateAndRun(testCtx, env, &configFile)
 		require.Error(t, err)
 	})
 
@@ -47,11 +49,11 @@ func TestAppCreateAndRun(t *testing.T) {
 			return &Database{}, nil
 		}
 
-		wireCfg = func(ctx context.Context, path *string) config.Config {
-			return config.Config{}
+		wireCfg = func(ctx context.Context, env config.Environment, path *string) (config.Config, error) {
+			return config.Config{}, nil
 		}
 
-		_, err := newApp(testCtx, nil, wireCfg, wireDB, wireDeps, wireSrv)
+		_, err := newApp(testCtx, config.Development, nil, wireCfg, wireDB, wireDeps, wireSrv)
 		require.NoError(t, err)
 	})
 }

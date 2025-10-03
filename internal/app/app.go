@@ -19,7 +19,7 @@ type App struct {
 	srv  Server
 }
 
-type wireConfig = func(ctx context.Context, path *string) config.Config
+type wireConfig = func(ctx context.Context, env config.Environment, envPath *string) (config.Config, error)
 
 // wireDB is a function that wires up the database dependency for the application.
 // It helps for creating alternative implementations of the database dependency. (especially for testing)
@@ -35,10 +35,15 @@ type wireServer = func(address string, handlers Handlers) Server
 
 // CreateAndRun is lifecycle management for the application.
 // It depends on function type to be replacable
-func CreateAndRun(ctx context.Context, envPath string) error {
+func CreateAndRun(
+	ctx context.Context,
+	environment config.Environment,
+	envPath *string,
+) error {
 	app, err := newApp(
 		ctx,
-		&envPath,
+		environment,
+		envPath,
 		wireCfg,
 		wireDB,
 		wireDeps,
@@ -48,7 +53,6 @@ func CreateAndRun(ctx context.Context, envPath string) error {
 		return err
 	}
 	app.Logger().Info("Application created successfully!")
-	app.Logger().Infof("Env: %s", envPath)
 	return app.runApp(ctx)
 }
 
@@ -56,14 +60,18 @@ func CreateAndRun(ctx context.Context, envPath string) error {
 // By replacing the passing functions, you can change the implementation of the App
 func newApp(
 	ctx context.Context,
-	path *string,
+	env config.Environment,
+	envPath *string,
 	fConfig wireConfig,
 	fDB wireDatabase,
 	fDeps wireDependencies,
 	fServer wireServer,
 ) (App, error) {
 	// TODO: Crutial implementation resource clean up if error occurs
-	cfg := fConfig(ctx, path)
+	cfg, err := fConfig(ctx, env, envPath)
+	if err != nil {
+		return App{}, err
+	}
 	db, err := fDB(ctx, cfg.GetDatabaseURL())
 	if err != nil {
 		return App{}, err
