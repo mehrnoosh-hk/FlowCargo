@@ -1,62 +1,71 @@
 package config
 
 import (
-	"errors"
+	"fmt"
+	"time"
+
+	"github.com/spf13/viper"
 )
 
 type Config struct {
-	Env      Environment `json:"env"`
-	Server   Server      `json:"server"`
-	Database Database    `json:"database"`
-	Logger   Logger      `json:"logger"`
+	Env      Environment `mapstructure:"env"`
+	Server   Server      `mapstructure:"server"`
+	Database Database    `mapstructure:"database"`
+	Logger   Logger      `mapstructure:"logger"`
+	CORS     CORS        `mapstructure:"cors"`
 }
 
 type Environment string
 
 const (
-	Dev  Environment = "dev"
-	Test Environment = "test"
-	Prod Environment = "prod"
+	Development Environment = "development"
+	Test        Environment = "test"
+	Production  Environment = "production"
 )
 
-// NewConfigOrDefault creates tries to create a Config instance from provided environment path.
-// If the path is empty, it will use the default environment.
-func NewConfigOrDefault(envPath *string) Config {
-	// TODO: Implement loading config from file
-	// Try to load config from file
-	// config, err := NewConfig()
-	if envPath == nil || *envPath == "" {
-		return DefaultConfig()
+// New creates a new Config instance based on the environment.
+// It receives the 'env' environment variable to determine which configuration loader to use.
+// In Production: reads from env variables and returns error if validation fails.
+// In Development/Test: tries to read config file, falls back to defaults if file loading fails.
+func New(env Environment, path *string) (Config, error) {
+	if env == Production {
+		loader := NewEnvLoader()
+		return loader.Load()
+	} else {
+		var cfg Config
+		loader := NewFileLoader(path)
+		cfg, err := loader.Load()
+		if err != nil {
+			// Fall back to defaults in development/test environments
+			fmt.Println("Failed to load config file, using defaults:", err)
+			setDefaults()
+			if err := viper.Unmarshal(&cfg); err != nil {
+				return Config{}, fmt.Errorf("failed to unmarshal default config: %w", err)
+			}
+		}
+		return cfg, nil
 	}
-	err := errors.New("error loading config") // TODO: Remove after actual implementation
-	if err != nil {
-		return DefaultConfig()
-	}
-	//return config
-	return Config{}
 }
 
-func DefaultConfig() Config {
-	return Config{
-		Env: Dev,
-		Server: Server{
-			Host: "localhost",
-			Port: "8080",
-		},
-		Database: Database{
-			Host:     "localhost",
-			Port:     "5432",
-			User:     "postgres",
-			Password: "password",
-			Name:     "flowcargo_dev",
-		},
-		Logger: Logger{
-			Level:  "INFO",
-			Source: true,
-		},
-	}
+func setDefaults() {
+	viper.SetDefault("env", "development")
+	viper.SetDefault("server.host", "localhost")
+	viper.SetDefault("server.port", "8080")
+	viper.SetDefault("database.host", "localhost")
+	viper.SetDefault("database.port", "5432")
+	viper.SetDefault("database.user", "postgres")
+	viper.SetDefault("database.password", "password")
+	viper.SetDefault("database.name", "flowcargo_dev")
+	viper.SetDefault("logger.level", "INFO")
+	viper.SetDefault("logger.source", true)
+	viper.SetDefault("cors.allowOrigins", []string{"http://localhost:3000"})
+	viper.SetDefault("cors.allowMethods", []string{"GET", "POST", "DELETE", "PUT", "OPTIONS"})
+	viper.SetDefault("cors.allowHeaders", []string{"Content-Type", "Authorization"})
+	viper.SetDefault("cors.allowCredentials", true)
+	viper.SetDefault("cors.exposeHeaders", []string{})
+	viper.SetDefault("cors.maxAge", time.Duration(3600*time.Second))
 }
 
 func (c Config) IsDevelopment() bool {
-	return c.Env == Dev
+	return (c.Env == Development)
 }
