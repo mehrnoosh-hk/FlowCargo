@@ -69,3 +69,7 @@ func setDefaults() {
 func (c Config) IsDevelopment() bool {
 	return (c.Env == Development)
 }
+
+func (e Environment) String() string {
+	return string(e)
+}

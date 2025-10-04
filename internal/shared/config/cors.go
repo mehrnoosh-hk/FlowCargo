@@ -5,8 +5,8 @@ import (
 )
 
 type CORS struct {
-	AllowOrigins     []string      `mapstructure:"allow-origins" validate:"required,dive,uri"`
-	AllowMethods     []string      `mapstructure:"allow-methods" validate:"required"`
+	AllowOrigins     []string      `mapstructure:"allow-origins" validate:"required,min=1,dive,uri"`
+	AllowMethods     []string      `mapstructure:"allow-methods" validate:"required,min=1"`
 	AllowHeaders     []string      `mapstructure:"allow-headers"`
 	AllowCredentials bool          `mapstructure:"allow-credentials"`
 	ExposeHeaders    []string      `mapstructure:"expose-headers"`
