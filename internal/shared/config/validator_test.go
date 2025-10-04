@@ -4,233 +4,209 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestConfigValidator_Validate(t *testing.T) {
-	validator := NewConfigValidator()
-
-	t.Run("Valid configuration", func(t *testing.T) {
-		cfg := Config{
-			Env: Production,
-			Server: Server{
-				Host: "localhost",
-				Port: "8080",
-			},
-			Database: Database{
-				Host:     "localhost",
-				Port:     "5432",
-				User:     "postgres",
-				Password: "password",
-				Name:     "testdb",
-				SSLMode:  "disable",
-			},
-			Logger: Logger{
-				Level:  "info",
-				Source: true,
-			},
-			CORS: CORS{
-				AllowOrigins:     []string{"http://localhost:3000"},
-				AllowMethods:     []string{"GET", "POST"},
-				AllowHeaders:     []string{"Content-Type"},
-				AllowCredentials: true,
-				ExposeHeaders:    []string{},
-				MaxAge:           3600,
-			},
-		}
-
-		err := validator.Validate(cfg)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Invalid server - missing host", func(t *testing.T) {
-		cfg := Config{
-			Env: Production,
-			Server: Server{
-				Host: "", // Missing required field
-				Port: "8080",
-			},
-			Database: Database{
-				Host:     "localhost",
-				Port:     "5432",
-				User:     "postgres",
-				Password: "password",
-				Name:     "testdb",
-				SSLMode:  "disable",
-			},
-		}
-
-		err := validator.Validate(cfg)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "config validation failed")
-	})
-
-	t.Run("Invalid database - missing required fields", func(t *testing.T) {
-		cfg := Config{
-			Env: Production,
-			Server: Server{
-				Host: "localhost",
-				Port: "8080",
-			},
-			Database: Database{
-				Host:     "", // Missing
-				Port:     "5432",
-				User:     "", // Missing
-				Password: "password",
-				Name:     "", // Missing
-				SSLMode:  "disable",
-			},
-		}
-
-		err := validator.Validate(cfg)
-		assert.Error(t, err)
-	})
-
-	t.Run("Invalid port - not numeric", func(t *testing.T) {
-		cfg := Config{
-			Env: Production,
-			Server: Server{
-				Host: "localhost",
-				Port: "abc", // Should be numeric
-			},
-			Database: Database{
-				Host:     "localhost",
-				Port:     "5432",
-				User:     "postgres",
-				Password: "password",
-				Name:     "testdb",
-				SSLMode:  "disable",
-			},
-		}
-
-		err := validator.Validate(cfg)
-		assert.Error(t, err)
-	})
-}
-
-func TestConfigValidator_ValidateServer(t *testing.T) {
-	validator := NewConfigValidator()
-
-	t.Run("Valid server config", func(t *testing.T) {
-		server := Server{
+// validConfig returns a fully valid configuration for testing.
+// Each test can clone and modify only the parts they need to test.
+func validConfig() Config {
+	return Config{
+		Env: Production,
+		Server: Server{
 			Host: "localhost",
 			Port: "8080",
-		}
-
-		err := validator.ValidateServer(server)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Invalid server - missing host", func(t *testing.T) {
-		server := Server{
-			Host: "",
-			Port: "8080",
-		}
-
-		err := validator.ValidateServer(server)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "server config validation failed")
-	})
-
-	t.Run("Invalid server - invalid port", func(t *testing.T) {
-		server := Server{
-			Host: "localhost",
-			Port: "not-a-number",
-		}
-
-		err := validator.ValidateServer(server)
-		assert.Error(t, err)
-	})
-}
-
-func TestConfigValidator_ValidateDatabase(t *testing.T) {
-	validator := NewConfigValidator()
-
-	t.Run("Valid database config", func(t *testing.T) {
-		db := Database{
+		},
+		Database: Database{
 			Host:     "localhost",
 			Port:     "5432",
 			User:     "postgres",
 			Password: "password",
 			Name:     "testdb",
 			SSLMode:  "disable",
-		}
-
-		err := validator.ValidateDatabase(db)
-		assert.NoError(t, err)
-	})
-
-	t.Run("Invalid database - missing fields", func(t *testing.T) {
-		db := Database{
-			Host:     "",
-			Port:     "5432",
-			User:     "",
-			Password: "",
-			Name:     "",
-			SSLMode:  "disable",
-		}
-
-		err := validator.ValidateDatabase(db)
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "database config validation failed")
-	})
-}
-
-func TestConfigValidator_ValidateCORS(t *testing.T) {
-	validator := NewConfigValidator()
-
-	t.Run("Valid CORS config", func(t *testing.T) {
-		cors := CORS{
+		},
+		Logger: Logger{
+			Level:  "info",
+			Source: true,
+		},
+		CORS: CORS{
 			AllowOrigins:     []string{"http://localhost:3000"},
 			AllowMethods:     []string{"GET", "POST"},
 			AllowHeaders:     []string{"Content-Type"},
 			AllowCredentials: true,
 			ExposeHeaders:    []string{},
 			MaxAge:           3600,
-		}
+		},
+	}
+}
 
-		err := validator.ValidateCORS(cors)
-		assert.NoError(t, err)
-	})
+func TestConfigValidator_Validate(t *testing.T) {
+	validator := NewConfigValidator()
 
-	t.Run("Invalid CORS - missing required fields", func(t *testing.T) {
-		cors := CORS{
-			AllowOrigins:     []string{},
-			AllowMethods:     []string{},
-			AllowHeaders:     []string{},
-			AllowCredentials: false,
-			ExposeHeaders:    []string{},
-			MaxAge:           0,
-		}
+	tests := []struct {
+		name        string
+		modifyFunc  func(*Config)
+		wantErr     bool
+		errContains string
+	}{
+		{
+			name:       "valid configuration",
+			modifyFunc: func(c *Config) {}, // No modifications
+			wantErr:    false,
+		},
+		{
+			name: "invalid server - missing host",
+			modifyFunc: func(c *Config) {
+				c.Server.Host = ""
+			},
+			wantErr:     true,
+			errContains: "Host",
+		},
+		{
+			name: "invalid server - missing port",
+			modifyFunc: func(c *Config) {
+				c.Server.Port = ""
+			},
+			wantErr:     true,
+			errContains: "Port",
+		},
+		{
+			name: "invalid server - non-numeric port",
+			modifyFunc: func(c *Config) {
+				c.Server.Port = "not-a-number"
+			},
+			wantErr:     true,
+			errContains: "Port",
+		},
+		{
+			name: "invalid database - missing host",
+			modifyFunc: func(c *Config) {
+				c.Database.Host = ""
+			},
+			wantErr:     true,
+			errContains: "Host",
+		},
+		{
+			name: "invalid database - missing user",
+			modifyFunc: func(c *Config) {
+				c.Database.User = ""
+			},
+			wantErr:     true,
+			errContains: "User",
+		},
+		{
+			name: "invalid database - missing name",
+			modifyFunc: func(c *Config) {
+				c.Database.Name = ""
+			},
+			wantErr:     true,
+			errContains: "Name",
+		},
+		{
+			name: "invalid database - missing password",
+			modifyFunc: func(c *Config) {
+				c.Database.Password = ""
+			},
+			wantErr:     true,
+			errContains: "Password",
+		},
+		{
+			name: "invalid database - multiple missing fields",
+			modifyFunc: func(c *Config) {
+				c.Database.Host = ""
+				c.Database.User = ""
+				c.Database.Name = ""
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid CORS - missing allow origins",
+			modifyFunc: func(c *Config) {
+				c.CORS.AllowOrigins = []string{}
+			},
+			wantErr:     true,
+			errContains: "AllowOrigins",
+		},
+		{
+			name: "invalid CORS - missing allow methods",
+			modifyFunc: func(c *Config) {
+				c.CORS.AllowMethods = []string{}
+			},
+			wantErr:     true,
+			errContains: "AllowMethods",
+		},
+		{
+			name: "invalid CORS - invalid origin URI",
+			modifyFunc: func(c *Config) {
+				c.CORS.AllowOrigins = []string{"not-a-valid-uri"}
+			},
+			wantErr:     true,
+			errContains: "AllowOrigins",
+		},
+		{
+			name: "invalid CORS - negative MaxAge",
+			modifyFunc: func(c *Config) {
+				c.CORS.MaxAge = -100
+			},
+			wantErr:     true,
+			errContains: "MaxAge",
+		},
+		{
+			name: "valid configuration with wildcard CORS origin",
+			modifyFunc: func(c *Config) {
+				c.CORS.AllowOrigins = []string{"*"}
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid configuration with minimal CORS",
+			modifyFunc: func(c *Config) {
+				c.CORS = CORS{
+					AllowOrigins:     []string{"http://example.com"},
+					AllowMethods:     []string{"GET"},
+					AllowHeaders:     []string{},
+					AllowCredentials: true,
+					ExposeHeaders:    []string{},
+					MaxAge:           0,
+				}
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid logger - missing level",
+			modifyFunc: func(c *Config) {
+				c.Logger.Level = ""
+			},
+			wantErr:     true,
+			errContains: "Level",
+		},
+		{
+			name: "valid configuration with different environment",
+			modifyFunc: func(c *Config) {
+				c.Env = Development
+			},
+			wantErr: false,
+		},
+	}
 
-		err := validator.ValidateCORS(cors)
-		assert.Error(t, err)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Create a fresh valid config for each test
+			cfg := validConfig()
 
-	t.Run("Invalid CORS - invalid origin URI", func(t *testing.T) {
-		cors := CORS{
-			AllowOrigins:     []string{"not-a-valid-uri"},
-			AllowMethods:     []string{"GET"},
-			AllowHeaders:     []string{},
-			AllowCredentials: false,
-			ExposeHeaders:    []string{},
-			MaxAge:           3600,
-		}
+			// Apply test-specific modifications
+			tt.modifyFunc(&cfg)
 
-		err := validator.ValidateCORS(cors)
-		assert.Error(t, err)
-	})
+			// Validate
+			err := validator.Validate(cfg)
 
-	t.Run("Invalid CORS - negative MaxAge", func(t *testing.T) {
-		cors := CORS{
-			AllowOrigins:     []string{"http://localhost:3000"},
-			AllowMethods:     []string{"GET"},
-			AllowHeaders:     []string{},
-			AllowCredentials: false,
-			ExposeHeaders:    []string{},
-			MaxAge:           -100, // Should be >= 0
-		}
-
-		err := validator.ValidateCORS(cors)
-		assert.Error(t, err)
-	})
+			if tt.wantErr {
+				require.Error(t, err, "expected an error but got none")
+				if tt.errContains != "" {
+					assert.Contains(t, err.Error(), tt.errContains, "error message should contain expected string")
+				}
+			} else {
+				assert.NoError(t, err, "expected no error but got: %v", err)
+			}
+		})
+	}
 }
