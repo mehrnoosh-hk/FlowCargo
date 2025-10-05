@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"flowcargo/internal/app/middleware"
 	"flowcargo/internal/shared/config"
 	"flowcargo/internal/shared/logger"
 )
@@ -31,7 +32,7 @@ type wireDependencies = func(ctx context.Context, db *Database, isDev bool, logL
 
 // wireServer is a function that wires up the server dependency for the application.
 // It helps for creating alternative implementations of the server dependency. (especially for testing)
-type wireServer = func(address string, handlers Handlers) Server
+type wireServer = func(address string,middleware middleware.Middleware, handlers Handlers) Server
 
 // CreateAndRun is lifecycle management for the application.
 // It depends on function type to be replacable
@@ -81,7 +82,7 @@ func newApp(
 		return App{}, err
 	}
 
-	srv := fServer(cfg.ServerAddress(), deps.Handlers)
+	srv := fServer(cfg.ServerAddress(), deps.Middleware, deps.Handlers)
 	return App{
 		cfg:  cfg,
 		db:   db,

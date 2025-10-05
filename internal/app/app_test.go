@@ -18,7 +18,12 @@ func TestAppCreateAndRun(t *testing.T) {
 			wireDeps = original
 		}()
 
-		wireDeps = func(ctx context.Context, db *Database, isDev bool, level logger.LogLevel) (Dependencies, error) {
+		wireDeps = func(
+			ctx context.Context, 
+			db *Database, 
+			isDev bool, 
+			level logger.LogLevel,
+		) (Dependencies, error) {
 			return Dependencies{}, errors.New("test error")
 		}
 		configFile := "path"
