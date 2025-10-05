@@ -11,13 +11,21 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-type TenantHandler struct {
+type TenantHandler interface {
+	CreateTenant(w http.ResponseWriter, r *http.Request)
+	GetTenant(w http.ResponseWriter, r *http.Request)
+	UpdateTenant(w http.ResponseWriter, r *http.Request)
+	DeleteTenant(w http.ResponseWriter, r *http.Request)
+}
+
+
+type tenantHandler struct {
 	service TenantService
 	l       logger.Logger
 }
 
 func NewTenantHandler(service TenantService, l logger.Logger) TenantHandler {
-	return TenantHandler{
+	return tenantHandler{
 		service: service,
 		l:       l,
 	}
@@ -25,7 +33,7 @@ func NewTenantHandler(service TenantService, l logger.Logger) TenantHandler {
 
 var validate = validator.New()
 
-func (h TenantHandler) CreateTenant(w http.ResponseWriter, r *http.Request) {
+func (h tenantHandler) CreateTenant(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -54,7 +62,7 @@ func (h TenantHandler) CreateTenant(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h TenantHandler) GetTenant(w http.ResponseWriter, r *http.Request) {
+func (h tenantHandler) GetTenant(w http.ResponseWriter, r *http.Request) {
 	idString := r.PathValue("id")
 	if idString == "" {
 		http.Error(w, "Missing id parameter", http.StatusBadRequest)
@@ -77,7 +85,7 @@ func (h TenantHandler) GetTenant(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h TenantHandler) UpdateTenant(w http.ResponseWriter, r *http.Request) {
+func (h tenantHandler) UpdateTenant(w http.ResponseWriter, r *http.Request) {
 	idString := r.PathValue("id")
 	if idString == "" {
 		http.Error(w, "Missing id parameter", http.StatusBadRequest)
@@ -114,7 +122,7 @@ func (h TenantHandler) UpdateTenant(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h TenantHandler) DeleteTenant(w http.ResponseWriter, r *http.Request) {
+func (h tenantHandler) DeleteTenant(w http.ResponseWriter, r *http.Request) {
 	idString := r.PathValue("id")
 	if idString == "" {
 		http.Error(w, "Missing id parameter", http.StatusBadRequest)

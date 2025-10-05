@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	db "flowcargo/db/sqlc"
+	"flowcargo/internal/app/middleware"
 	"flowcargo/internal/shared/logger"
 	"flowcargo/internal/tenant"
 	"fmt"
@@ -14,6 +15,7 @@ type Dependencies struct {
 	Repos    Repositories
 	Services Services
 	Handlers Handlers
+	Middleware middleware.Middleware // We treat all middlewares the same way, since they are not entity specific.
 }
 
 type Repositories struct {

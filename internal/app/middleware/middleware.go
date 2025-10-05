@@ -7,7 +7,7 @@ import (
 )
 
 type Middleware interface {
-	CorsMiddleware() func(next http.Handler) http.Handler
+	CORS() func(next http.Handler) http.Handler
 }
 
 type middleware struct {

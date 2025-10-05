@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"flowcargo/internal/app/middleware"
 	"net/http"
 )
 
@@ -9,14 +10,15 @@ type Server struct {
 	srv *http.Server // Define your server fields here
 }
 
-var wireSrv = func(address string, handlers Handlers) Server {
+var wireSrv = func(address string, middleware middleware.Middleware, handlers Handlers) Server {
 	mux := http.NewServeMux()
 	mux = wireRoutes(mux, handlers)
+	handler := wireMiddleware(mux, middleware)
 
 	return Server{
 		srv: &http.Server{
 			Addr:    address,
-			Handler: mux,
+			Handler: handler,
 		},
 	}
 }
@@ -40,6 +42,12 @@ func wireRoutes(mux *http.ServeMux, handlers Handlers) *http.ServeMux {
 	mux.HandleFunc("DELETE /tenants/{id}", handlers.TenantHandler.DeleteTenant)
 
 	return mux
+}
+
+func wireMiddleware(handler http.Handler, middleware middleware.Middleware) http.Handler {
+	// Apply CORS middleware
+	handler = middleware.CORS()(handler)
+	return handler
 }
 
 func (s Server) getAddress() string {
