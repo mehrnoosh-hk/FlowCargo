@@ -275,7 +275,7 @@ func TestCorsMiddleware(t *testing.T) {
 			})
 
 			// Create the CORS middleware handler
-			handler := m.CorsMiddleware()(nextHandler)
+			handler := m.CORS()(nextHandler)
 
 			// Create request
 			req := httptest.NewRequest(tt.requestMethod, "http://example.com/test", nil)
