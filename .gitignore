@@ -52,3 +52,6 @@ TODO.md
 
 # Log files
 *.log
+
+# Markdown files
+*.md
