@@ -14,6 +14,8 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	"flowcargo/internal/shared/logger"
 )
 
 var (
@@ -236,4 +238,12 @@ func findMigrationsDir() (string, error) {
 
 func (m *TestDBManager) GetPool() *pgxpool.Pool {
 	return m.db
+}
+
+func NewTestLogger() (logger.Logger, error) {
+	return logger.NewLogger(false, logger.Info)
+}
+
+func ToPointer[T any](input T) *T {
+	return &input
 }
