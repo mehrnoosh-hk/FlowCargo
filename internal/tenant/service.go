@@ -3,16 +3,17 @@ package tenant
 
 import (
 	"context"
-	"flowcargo/internal/shared/logger"
 
 	"github.com/google/uuid"
+
+	"flowcargo/internal/shared/logger"
 )
 
 type TenantService interface {
 	CreateTenant(ctx context.Context, params CreateTenantParams) (*Tenant, error)
 	GetTenantByID(ctx context.Context, id uuid.UUID) (*Tenant, error)
 	UpdateTenant(ctx context.Context, id uuid.UUID, params UpdateTenantParams) (*Tenant, error)
-	SoftDeleteTenant(ctx context.Context, id uuid.UUID) (*Tenant, error)
+	DeleteTenant(ctx context.Context, id uuid.UUID) (*Tenant, error)
 }
 
 type tenantService struct {
@@ -40,7 +41,7 @@ func (ts *tenantService) UpdateTenant(ctx context.Context, id uuid.UUID, params 
 	return ts.tenantRepo.UpdateTenant(ctx, params)
 }
 
-func (ts *tenantService) SoftDeleteTenant(ctx context.Context, id uuid.UUID) (*Tenant, error) {
+func (ts *tenantService) DeleteTenant(ctx context.Context, id uuid.UUID) (*Tenant, error) {
 	isActive := false
 	params := UpdateTenantParams{
 		ID:       id,
