@@ -3,8 +3,9 @@ package main
 import (
 	"flag"
 	"os"
-	"flowcargo/internal/shared/config"
 	"testing"
+
+	"flowcargo/internal/shared/config"
 )
 
 func TestParseFlags(t *testing.T) {
@@ -50,15 +51,21 @@ func TestParseFlags(t *testing.T) {
 			expectError: false,
 		},
 		{
-			name: "config path not exist",
-			args: []string{"-env=development", "-config=" + notExist},
-			expected: Flags{},
+			name:        "config path not exist",
+			args:        []string{"-env=development", "-config=" + notExist},
+			expected:    Flags{},
 			expectError: true,
 		},
 		{
-			name: "missing environment",
-			args: []string{"-config=" + validPath},
-			expected: Flags{},
+			name:        "config path with stat error",
+			args:        []string{"-env=development", "-config=/root/no_permission.yaml"},
+			expected:    Flags{},
+			expectError: true,
+		},
+		{
+			name:        "missing environment",
+			args:        []string{"-config=" + validPath},
+			expected:    Flags{},
 			expectError: true,
 		},
 	}
@@ -72,11 +79,11 @@ func TestParseFlags(t *testing.T) {
 			if err != nil && !tt.expectError {
 				t.Errorf("unexpected error: %v", err)
 			}
-			
+
 			if err == nil && tt.expectError {
 				t.Errorf("expected error but got none")
 			}
-			
+
 			if tt.expectError {
 				return
 			}
@@ -85,7 +92,7 @@ func TestParseFlags(t *testing.T) {
 				t.Errorf("unexpected environment: got %v, want %v", parsedFlags.Environment, tt.expected.Environment)
 			}
 
-			if parsedFlags.ConfigPath != nil &&*parsedFlags.ConfigPath != *tt.expected.ConfigPath {
+			if parsedFlags.ConfigPath != nil && *parsedFlags.ConfigPath != *tt.expected.ConfigPath {
 				t.Errorf("unexpected config path: got %v, want %v", parsedFlags.ConfigPath, tt.expected.ConfigPath)
 			}
 		})

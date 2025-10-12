@@ -3,9 +3,10 @@ package main
 import (
 	"errors"
 	"flag"
-	"flowcargo/internal/shared/config"
 	"fmt"
 	"os"
+
+	"flowcargo/internal/shared/config"
 )
 
 type Flags struct {
@@ -22,7 +23,7 @@ func ParseFlagsFromSet(f *flag.FlagSet, args []string) (Flags, error) {
 	configPath := f.String("config", "", "Path to config file (optional)")
 
 	f.Parse(args)
-	
+
 	parsedFlags, err := validateFlags(env, configPath)
 
 	if err != nil {
@@ -63,8 +64,8 @@ func validatePath(path *string) (*string, error) {
 		return nil, nil
 	}
 	// check if the file exists
-	if _, err := os.Stat(*path); os.IsNotExist(err) {
-		return nil, fmt.Errorf("config file does not exist: %s", *path)
+	if _, err := os.Stat(*path); err != nil {
+		return nil, fmt.Errorf("cannot stat config file %s: %w", *path, err)
 	}
 	return path, nil
 }
