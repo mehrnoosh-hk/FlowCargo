@@ -9,6 +9,7 @@ import (
 
 // Middleware is an interface for app middlewares
 type Middleware interface {
+	Recovery() func(next http.Handler) http.Handler
 	CORS() func(next http.Handler) http.Handler
 	RequestID() func(next http.Handler) http.Handler
 	ReqLog() func(next http.Handler) http.Handler
