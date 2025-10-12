@@ -3,7 +3,7 @@
 
 # Application Configuration
 BINARY_NAME=flowcargo
-MAIN_PATH=./cmd/api/main.go
+MAIN_PATH=./cmd/api
 MIGRATION_DIR=./migrations
 
 # Load environment variables from .env.dev if it exists
