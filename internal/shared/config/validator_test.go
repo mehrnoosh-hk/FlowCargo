@@ -28,7 +28,7 @@ func validConfig() Config {
 			Level:  "info",
 			Source: true,
 		},
-		CORS: CORS{
+		CORSConfig: CORS{
 			AllowOrigins:     []string{"http://localhost:3000"},
 			AllowMethods:     []string{"GET", "POST"},
 			AllowHeaders:     []string{"Content-Type"},
@@ -121,7 +121,7 @@ func TestConfigValidator_Validate(t *testing.T) {
 		{
 			name: "invalid CORS - missing allow origins",
 			modifyFunc: func(c *Config) {
-				c.CORS.AllowOrigins = []string{}
+				c.CORSConfig.AllowOrigins = []string{}
 			},
 			wantErr:     true,
 			errContains: "AllowOrigins",
@@ -129,7 +129,7 @@ func TestConfigValidator_Validate(t *testing.T) {
 		{
 			name: "invalid CORS - missing allow methods",
 			modifyFunc: func(c *Config) {
-				c.CORS.AllowMethods = []string{}
+				c.CORSConfig.AllowMethods = []string{}
 			},
 			wantErr:     true,
 			errContains: "AllowMethods",
@@ -137,7 +137,7 @@ func TestConfigValidator_Validate(t *testing.T) {
 		{
 			name: "invalid CORS - invalid origin URI",
 			modifyFunc: func(c *Config) {
-				c.CORS.AllowOrigins = []string{"not-a-valid-uri"}
+				c.CORSConfig.AllowOrigins = []string{"not-a-valid-uri"}
 			},
 			wantErr:     true,
 			errContains: "AllowOrigins",
@@ -145,7 +145,7 @@ func TestConfigValidator_Validate(t *testing.T) {
 		{
 			name: "invalid CORS - negative MaxAge",
 			modifyFunc: func(c *Config) {
-				c.CORS.MaxAge = -100
+				c.CORSConfig.MaxAge = -100
 			},
 			wantErr:     true,
 			errContains: "MaxAge",
@@ -153,14 +153,14 @@ func TestConfigValidator_Validate(t *testing.T) {
 		{
 			name: "valid configuration with wildcard CORS origin",
 			modifyFunc: func(c *Config) {
-				c.CORS.AllowOrigins = []string{"*"}
+				c.CORSConfig.AllowOrigins = []string{"*"}
 			},
 			wantErr: false,
 		},
 		{
 			name: "valid configuration with minimal CORS",
 			modifyFunc: func(c *Config) {
-				c.CORS = CORS{
+				c.CORSConfig = CORS{
 					AllowOrigins:     []string{"http://example.com"},
 					AllowMethods:     []string{"GET"},
 					AllowHeaders:     []string{},
