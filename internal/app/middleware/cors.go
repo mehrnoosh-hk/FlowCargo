@@ -1,14 +1,15 @@
 package middleware
 
 import (
-	"flowcargo/internal/shared/config"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
+
+	"flowcargo/internal/shared/config"
 )
 
-func (m middleware) CORS() func(http.Handler) http.Handler {
+func (m *middleware) CORS() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			origin := r.Header.Get("Origin")
