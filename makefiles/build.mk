@@ -6,7 +6,7 @@ run: ## Run the main application
 	go run $(MAIN_PATH)
 
 .PHONY: build
-build: ## Build the application
+build: swagger-gen ## Build the application with Swagger docs
 	go build $(BUILD_FLAGS) -o $(BUILD_OUTPUT) $(MAIN_PATH)
 
 .PHONY: build-linux

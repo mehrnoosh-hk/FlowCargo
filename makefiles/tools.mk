@@ -46,6 +46,29 @@ install-misspell: ## Install misspell
 install-gosec: ## Install gosec
 	go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
 
+.PHONY: install-swag
+install-swag: ## Install swag CLI tool
+	@echo "Installing swag..."
+	@go install github.com/swaggo/swag/cmd/swag@latest
+
+.PHONY: swagger-gen
+swagger-gen: ## Generate Swagger documentation
+	@echo "Generating Swagger documentation..."
+	@swag init -g cmd/api/main.go -o docs --parseDependency --parseInternal
+	@echo "Swagger documentation generated successfully!"
+
+.PHONY: swagger-fmt
+swagger-fmt: ## Format Swagger annotations
+	@echo "Formatting Swagger annotations..."
+	@swag fmt
+	@echo "Swagger annotations formatted successfully!"
+
+.PHONY: swagger-validate
+swagger-validate: swagger-gen ## Validate Swagger documentation
+	@echo "Validating Swagger documentation..."
+	@test -f docs/swagger.json || (echo "swagger.json not found" && exit 1)
+	@echo "Swagger documentation is valid"
+
 .PHONY: sqlc
 sqlc: ## Generate Go code from SQL queries
 	@echo "Generating SQLC code..."

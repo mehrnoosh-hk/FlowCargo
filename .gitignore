@@ -22,13 +22,10 @@ go.work
 go.work.sum
 
 # env file
-<<<<<<< Updated upstream
-=======
 .env
->>>>>>> Stashed changes
-# .env.dev
+.env.dev
 
-# AI files and folders
+# Gemini files and folders
 .gemini/
 
 # Test coverage files
@@ -41,11 +38,20 @@ coverage.html.xml
 # Temporary files
 temp.*
 temp_*.*
-<<<<<<< Updated upstream
-*.temp
-=======
-*.temp
 
 # TODO files
 TODO.md
 >>>>>>> Stashed changes
+
+# Kiro files
+.kiro/
+
+# IDE files
+.idea/
+.vscode/
+
+# Log files
+*.log
+
+# Markdown files
+*.md

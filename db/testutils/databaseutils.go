@@ -10,7 +10,7 @@ import (
 	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres" // This is a tests util file. It is ok to import blank.
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -22,7 +22,7 @@ var (
 	initError error
 )
 
-// TestDB interface defines methods for interacting with a test database
+// TestDB interface defines methods for interacting with a test database.
 type TestDB interface {
 	GetPool() *pgxpool.Pool
 	BeginTx(ctx context.Context, t *testing.T) pgx.Tx
@@ -39,6 +39,7 @@ type TestDBManager struct {
 	closed      bool
 }
 
+// GetDBManager returns the singleton instance of TestDBManager
 func GetDBManager() TestDB {
 	once.Do(func() {
 		dbManager = NewTestDBManager(GetTestDSN())
@@ -47,6 +48,7 @@ func GetDBManager() TestDB {
 	return dbManager
 }
 
+// NewTestDBManager creates a new instance of TestDBManager
 func NewTestDBManager(dsn string) *TestDBManager {
 	return &TestDBManager{
 		dsn:         dsn,
@@ -95,6 +97,7 @@ func (m *TestDBManager) Initialize() error {
 	return initErr
 }
 
+// BeginTx starts a new transaction for tests and returns the transaction object
 func (m *TestDBManager) BeginTx(ctx context.Context, t *testing.T) pgx.Tx {
 	if t != nil {
 		t.Helper()
@@ -234,6 +237,12 @@ func findMigrationsDir() (string, error) {
 	}
 }
 
+// GetPool returns the underlying pgxpool.Pool instance
 func (m *TestDBManager) GetPool() *pgxpool.Pool {
 	return m.db
+}
+
+// ToPointer is a generic utility function that takes a value of any type and returns a pointer to that value.
+func ToPointer[T any](input T) *T {
+	return &input
 }

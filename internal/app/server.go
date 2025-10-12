@@ -3,25 +3,34 @@ package app
 import (
 	"context"
 	"net/http"
+
+	httpSwagger "github.com/swaggo/http-swagger"
+
+	"flowcargo/internal/app/middleware"
 )
 
+// Server is an interface that defines methods for starting and stopping the server.
 type Server struct {
 	srv *http.Server // Define your server fields here
 }
 
-var wireSrv = func(address string, handlers Handlers) Server {
+func wireServerFn(address string, middleware middleware.Middleware, handlers Handlers) Server {
 	mux := http.NewServeMux()
 	mux = wireRoutes(mux, handlers)
+	handler := wireMiddleware(mux, middleware)
 
 	return Server{
 		srv: &http.Server{
 			Addr:    address,
-			Handler: mux,
+			Handler: handler,
 		},
 	}
 }
 
 func wireRoutes(mux *http.ServeMux, handlers Handlers) *http.ServeMux {
+	// Swagger UI route - registered first
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
+
 	mux.HandleFunc("/test", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 		w.Write([]byte("Hello, World!"))
@@ -40,6 +49,17 @@ func wireRoutes(mux *http.ServeMux, handlers Handlers) *http.ServeMux {
 	mux.HandleFunc("DELETE /tenants/{id}", handlers.TenantHandler.DeleteTenant)
 
 	return mux
+}
+
+func wireMiddleware(handler http.Handler, middleware middleware.Middleware) http.Handler {
+	// Apply middleware in reverse order of execution
+	// (last applied = first executed)
+
+	handler = middleware.CORS()(handler)
+	handler = middleware.ReqLog()(handler)
+	handler = middleware.RequestID()(handler)
+
+	return handler
 }
 
 func (s Server) getAddress() string {

@@ -1,0 +1,41 @@
+env: development
+
+server:
+  host: localhost
+  port: 8080
+  shutdown-timeout: 5s
+  read-timeout: 5s
+  write-timeout: 10s
+  idle-timeout: 120s
+
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: password
+  name: flowcargo_dev
+  ssl-mode: disable
+
+logger:
+  level: INFO
+  source: true
+
+cors:
+  allow-origins:
+    - http://localhost:3000
+    - http://localhost:8080
+  allow-methods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+    - OPTIONS
+  allow-headers:
+    - Content-Type
+    - Authorization
+    - X-Requested-With
+  allow-credentials: true
+  expose-headers:
+    - Content-Type
+    - X-Request-Id
+  max-age: 3600
