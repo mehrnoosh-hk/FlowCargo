@@ -9,13 +9,30 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-type Logger struct {
+// Logger interface defines the methods for logging at various levels.
+type Logger interface {
+	Debug(args ...interface{})
+	Debugf(format string, args ...interface{})
+	Info(args ...interface{})
+	Infof(format string, args ...interface{})
+	Warn(args ...interface{})
+	Warnf(format string, args ...interface{})
+	Error(args ...interface{})
+	Errorf(format string, args ...interface{})
+	Fatal(args ...interface{})
+	Fatalf(format string, args ...interface{})
+	Close() error
+}
+
+type loggerImplementation struct {
 	*logrus.Logger
 	out *os.File
 }
 
+// LogLevel is an abstraction over implementations (logrus, zap) log levels.
 type LogLevel string
 
+// Log levels supported by the logger.
 const (
 	Debug LogLevel = "debug"
 	Info  LogLevel = "info"
@@ -23,11 +40,12 @@ const (
 	Error LogLevel = "error"
 )
 
+// NewLogger is a wrapper around the logrus.Logger to implement the Logger interface.
 func NewLogger(isDevelopment bool, level LogLevel) (Logger, error) {
 	logger := logrus.New()
 	lvl, err := logrus.ParseLevel(string(level))
 	if err != nil {
-		return Logger{}, err
+		return nil, err
 	}
 	logger.SetLevel(lvl)
 	var outFile *os.File
@@ -57,10 +75,11 @@ func NewLogger(isDevelopment bool, level LogLevel) (Logger, error) {
 			logger.Info("failed to log to file, using default stderr")
 		}
 	}
-	return Logger{logger, outFile}, nil
+	return &loggerImplementation{logger, outFile}, nil
 }
 
-func (l Logger) Close() error {
+// Close closes the logger's output file if it was set.
+func (l *loggerImplementation) Close() error {
 	if l.out != nil {
 		return l.out.Close()
 	}
