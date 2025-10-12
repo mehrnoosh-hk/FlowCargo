@@ -8,11 +8,11 @@ import (
 	"os/signal"
 	"syscall"
 
-	"flowcargo/internal/app/middleware"
 	"flowcargo/internal/shared/config"
 	"flowcargo/internal/shared/logger"
 )
 
+// App is the main application struct that holds all dependencies and configurations.
 type App struct {
 	cfg  config.Config
 	db   *Database
@@ -20,75 +20,26 @@ type App struct {
 	srv  Server
 }
 
-type wireConfig = func(ctx context.Context, env config.Environment, envPath *string) (config.Config, error)
-
-// wireDB is a function that wires up the database dependency for the application.
-// It helps for creating alternative implementations of the database dependency. (especially for testing)
-type wireDatabase = func(ctx context.Context, URL string) (*Database, error)
-
-// wireDeps is a function that wires up the dependencies for the application.
+// Wire is an interface that defines methods for wiring up App struct fields.
 // It helps for creating alternative implementations of the dependencies. (especially for testing)
-type wireDependencies = func(ctx context.Context, db *Database, isDev bool, logLevel logger.LogLevel) (Dependencies, error)
-
-// wireServer is a function that wires up the server dependency for the application.
-// It helps for creating alternative implementations of the server dependency. (especially for testing)
-type wireServer = func(address string,middleware middleware.Middleware, handlers Handlers) Server
+type Wire interface {
+	Up(ctx context.Context, env config.Environment, configPath *string) (App, error)
+}
 
 // CreateAndRun is lifecycle management for the application.
-// It depends on function type to be replacable
+// It uses Wire interface to create the App instance and then runs it.
 func CreateAndRun(
 	ctx context.Context,
 	environment config.Environment,
-	envPath *string,
+	configPath *string,
+	wire Wire,
 ) error {
-	app, err := newApp(
-		ctx,
-		environment,
-		envPath,
-		wireCfg,
-		wireDB,
-		wireDeps,
-		wireSrv,
-	)
+	app, err := wire.Up(ctx, environment, configPath)
 	if err != nil {
 		return err
 	}
 	app.Logger().Info("Application created successfully!")
 	return app.runApp(ctx)
-}
-
-// newApp is a factory function that creates a new App instance with all dependencies.
-// By replacing the passing functions, you can change the implementation of the App
-func newApp(
-	ctx context.Context,
-	env config.Environment,
-	envPath *string,
-	fConfig wireConfig,
-	fDB wireDatabase,
-	fDeps wireDependencies,
-	fServer wireServer,
-) (App, error) {
-	// TODO: Crutial implementation resource clean up if error occurs
-	cfg, err := fConfig(ctx, env, envPath)
-	if err != nil {
-		return App{}, err
-	}
-	db, err := fDB(ctx, cfg.GetDatabaseURL())
-	if err != nil {
-		return App{}, err
-	}
-	deps, err := fDeps(ctx, db, cfg.IsDevelopment(), cfg.LogLevel())
-	if err != nil {
-		return App{}, err
-	}
-
-	srv := fServer(cfg.ServerAddress(), deps.Middleware, deps.Handlers)
-	return App{
-		cfg:  cfg,
-		db:   db,
-		deps: deps,
-		srv:  srv,
-	}, nil
 }
 
 // runApp starts all the resources and runs the application.
@@ -135,6 +86,7 @@ func (a App) shutdown(ctx context.Context) error {
 	return nil
 }
 
+// Logger returns the application's logger instance.
 func (a App) Logger() logger.Logger {
 	return a.deps.getLogger()
 }

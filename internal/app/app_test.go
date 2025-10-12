@@ -2,63 +2,106 @@ package app
 
 import (
 	"context"
-	"errors"
-	"flowcargo/internal/shared/config"
-	"flowcargo/internal/shared/logger"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
+
+	"flowcargo/internal/shared/config"
 )
 
-func TestAppCreateAndRun(t *testing.T) {
-	t.Run("Returns error if it can not wire dependencies", func(t *testing.T) {
-		testCtx := context.Background()
-		original := wireDeps
-		defer func() {
-			wireDeps = original
-		}()
+func TestNewApp(t *testing.T) {
+	testCases := []struct {
+		name        string
+		wireFunc    func() Wire
+		expectError bool
+	}{
+		{
+			name:        "Creating new app fails if it can not wire dependencies",
+			wireFunc:    newFailedWire,
+			expectError: true,
+		},
+		{
+			name:        "Creates the application, if all wire functions succeed",
+			wireFunc:    newSucceedWire,
+			expectError: false,
+		},
+	}
 
-		wireDeps = func(
-			ctx context.Context, 
-			db *Database, 
-			isDev bool, 
-			level logger.LogLevel,
-		) (Dependencies, error) {
-			return Dependencies{}, errors.New("test error")
-		}
-		configFile := "path"
-		env := config.Development
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			testCtx := context.Background()
+			configFile := "path"
+			env := config.Test
 
-		err := CreateAndRun(testCtx, env, &configFile)
-		require.Error(t, err)
-	})
+			wire := tc.wireFunc()
 
-	t.Run("Creates the application, if all wire functions succeed", func(t *testing.T) {
-		testCtx := context.Background()
-		originalDeps := wireDeps
-		originalDB := wireDB
-		originalCfg := wireCfg
-		originalSrv := wireSrv
-		defer func() {
-			wireDeps = originalDeps
-			wireDB = originalDB
-			wireCfg = originalCfg
-			wireSrv = originalSrv
-		}()
+			app, err := wire.Up(testCtx, env, &configFile)
+			if tc.expectError {
+				require.Equal(t, App{}, app)
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.NotEmpty(t, app)
+			}
+		})
+	}
+}
 
-		wireDeps = func(ctx context.Context, db *Database, isDev bool, level logger.LogLevel) (Dependencies, error) {
-			return Dependencies{}, nil
-		}
+func TestCreateAndRun(t *testing.T) {
 
-		wireDB = func(ctx context.Context, dbURL string) (*Database, error) {
-			return &Database{}, nil
-		}
+	tests := []struct {
+		name     string // description of this test case
+		wireFunc func() Wire
+		// Named input parameters for target function.
+		environment config.Environment
+		configPath  *string
+		wantErr     bool
+	}{
+		{
+			name:        "CreateAndRun fails if it can not wire dependencies",
+			wireFunc:    newFailedWire,
+			environment: config.Development,
+			configPath:  nil,
+			wantErr:     true,
+		},
+		{
+			name:        "CreateAndRun succeeds if it can wire dependencies",
+			wireFunc:    newSucceedWire,
+			environment: config.Development,
+			configPath:  nil,
+			wantErr:     false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 
-		wireCfg = func(ctx context.Context, env config.Environment, path *string) (config.Config, error) {
-			return config.Config{}, nil
-		}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 
-		_, err := newApp(testCtx, config.Development, nil, wireCfg, wireDB, wireDeps, wireSrv)
-		require.NoError(t, err)
-	})
+			// Start goroutine to cancel context BEFORE calling CreateAndRun
+			go func() {
+				time.Sleep(100 * time.Millisecond)
+				cancel()
+			}()
+
+			gotErr := CreateAndRun(
+				ctx,
+				tt.environment,
+				tt.configPath,
+				tt.wireFunc(),
+			)
+
+			if gotErr != nil {
+				if !tt.wantErr {
+					t.Errorf("CreateAndRun() failed: %v", gotErr)
+				}
+				return
+			}
+			if tt.wantErr {
+				t.Fatal("CreateAndRun() succeeded unexpectedly")
+			}
+			t.Log(tt.name + " Passed")
+		})
+	}
 }
