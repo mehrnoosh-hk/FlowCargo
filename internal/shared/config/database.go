@@ -10,7 +10,7 @@ type Database struct {
 	User     string `json:"user" mapstructure:"user" validate:"required"`
 	Password string `json:"password" mapstructure:"password" validate:"required"`
 	Name     string `json:"name" mapstructure:"name" validate:"required"`
-	SSLMode  string   `json:"ssl_mode" mapstructure:"ssl-mode" validate:"required"`
+	SSLMode  string `json:"ssl_mode" mapstructure:"ssl-mode" validate:"required"`
 }
 
 func (cfg Config) GetDatabaseURL() string {
