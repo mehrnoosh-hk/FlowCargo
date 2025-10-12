@@ -8,11 +8,11 @@ import (
 )
 
 type Config struct {
-	Env      Environment `mapstructure:"env"`
-	Server   Server      `mapstructure:"server"`
-	Database Database    `mapstructure:"database"`
-	Logger   Logger      `mapstructure:"logger"`
-	CORS     CORS        `mapstructure:"cors"`
+	Env        Environment `mapstructure:"env"`
+	Server     Server      `mapstructure:"server"`
+	Database   Database    `mapstructure:"database"`
+	Logger     Logger      `mapstructure:"logger"`
+	CORSConfig CORS        `mapstructure:"cors"`
 }
 
 type Environment string
