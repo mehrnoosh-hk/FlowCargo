@@ -9,7 +9,7 @@ import (
 	"github.com/google/uuid"
 )
 
-
+// RetrieveID extracts and validates a UUID from the "id" path parameter of the HTTP request.
 func RetrieveID(r *http.Request) (uuid.UUID, error) {
 	idString := r.PathValue("id")
 	if idString == "" {
@@ -22,6 +22,7 @@ func RetrieveID(r *http.Request) (uuid.UUID, error) {
 	return id, nil
 }
 
+// RetrieveBody decodes and validates the JSON body of the HTTP request into the specified struct type.
 func RetrieveBody[T any](r *http.Request) (T, error) {
 	var body T
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
