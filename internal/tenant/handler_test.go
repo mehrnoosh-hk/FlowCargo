@@ -15,8 +15,7 @@ import (
 )
 
 func TestTenantHandler(t *testing.T) {
-	l, err := testutils.NewTestLogger()
-	require.NoError(t, err)
+	l := testutils.NewTestLogger()
 	service := newmockService()
 	handler := NewTenantHandler(service, l)
 
@@ -115,7 +114,7 @@ func TestTenantHandler(t *testing.T) {
 
 		require.Equal(t, http.StatusOK, w.Code)
 		var resp ru.APIResponse[Tenant]
-		err = json.NewDecoder(w.Body).Decode(&resp)
+		err := json.NewDecoder(w.Body).Decode(&resp)
 		require.NoError(t, err)
 		require.True(t, resp.Success)
 		require.Equal(t, "Tenant retrieved successfully", resp.Message)
@@ -129,7 +128,7 @@ func TestTenantHandler(t *testing.T) {
 
 		require.Equal(t, http.StatusBadRequest, w.Code)
 		var resp ru.APIResponse[Tenant]
-		err = json.NewDecoder(w.Body).Decode(&resp)
+		err := json.NewDecoder(w.Body).Decode(&resp)
 		require.NoError(t, err)
 		require.False(t, resp.Success)
 		require.Nil(t, resp.Data)
@@ -144,7 +143,7 @@ func TestTenantHandler(t *testing.T) {
 		// TODO: Fix this test after updating error handling in service layer
 		require.Equal(t, http.StatusInternalServerError, w.Code)
 		var resp ru.APIResponse[Tenant]
-		err = json.NewDecoder(w.Body).Decode(&resp)
+		err := json.NewDecoder(w.Body).Decode(&resp)
 		require.NoError(t, err)
 		require.False(t, resp.Success)
 		require.Nil(t, resp.Data)
@@ -213,7 +212,7 @@ func TestTenantHandler(t *testing.T) {
 		require.Equal(t, http.StatusOK, w.Code)
 		require.Equal(t, "application/json", w.Header().Get("Content-Type"))
 		var resp ru.APIResponse[Tenant]
-		err = json.NewDecoder(w.Body).Decode(&resp)
+		err := json.NewDecoder(w.Body).Decode(&resp)
 		require.NoError(t, err)
 		require.True(t, resp.Success)
 		require.Equal(t, "Tenant deleted successfully", resp.Message)
@@ -230,7 +229,7 @@ func TestTenantHandler(t *testing.T) {
 
 		require.Equal(t, http.StatusBadRequest, w.Code)
 		var resp ru.APIResponse[Tenant]
-		err = json.NewDecoder(w.Body).Decode(&resp)
+		err := json.NewDecoder(w.Body).Decode(&resp)
 		require.NoError(t, err)
 		require.False(t, resp.Success)
 		require.Nil(t, resp.Data)
