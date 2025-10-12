@@ -1,0 +1,291 @@
+basePath: /
+definitions:
+  restutils.APIResponse-any:
+    properties:
+      data: {}
+      error:
+        $ref: '#/definitions/restutils.ErrorDetail'
+      message:
+        example: Operation completed successfully
+        type: string
+      meta:
+        $ref: '#/definitions/restutils.Metadata'
+      success:
+        example: true
+        type: boolean
+    type: object
+  restutils.APIResponse-tenant_Tenant:
+    properties:
+      data:
+        $ref: '#/definitions/tenant.Tenant'
+      error:
+        $ref: '#/definitions/restutils.ErrorDetail'
+      message:
+        example: Operation completed successfully
+        type: string
+      meta:
+        $ref: '#/definitions/restutils.Metadata'
+      success:
+        example: true
+        type: boolean
+    type: object
+  restutils.ErrCode:
+    enum:
+    - VALIDATION_ERROR
+    - NOT_FOUND
+    - INTERNAL_SERVER_ERROR
+    - UNAUTHORIZED
+    - FORBIDDEN
+    - RESOURCE_CONFLICT
+    - DATABASE_ERROR
+    - EXTERNAL_SERVICE_ERROR
+    - METHOD_NOT_ALLOWED
+    type: string
+    x-enum-varnames:
+    - ErrCodeValidation
+    - ErrCodeNotFound
+    - ErrCodeInternal
+    - ErrCodeUnauthorized
+    - ErrCodeForbidden
+    - ErrCodeConflict
+    - ErrCodeDatabase
+    - ErrCodeExternalService
+    - ErrCodeMethodNotAllowed
+  restutils.ErrorDetail:
+    description: Detailed error information including status code, error code, resource,
+      and error messages
+    properties:
+      code:
+        allOf:
+        - $ref: '#/definitions/restutils.ErrCode'
+        example: VALIDATION_ERROR
+      errors:
+        example: 'validation failed: name is required'
+        type: string
+      resource:
+        allOf:
+        - $ref: '#/definitions/restutils.Resource'
+        example: tenant
+      status:
+        example: 400
+        type: integer
+    type: object
+  restutils.Metadata:
+    description: Response metadata containing timestamp and other contextual information
+    properties:
+      timestamp:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  restutils.Resource:
+    enum:
+    - tenant
+    type: string
+    x-enum-varnames:
+    - ResourceTenant
+  tenant.CreateTenantParams:
+    description: Parameters for creating a new tenant account
+    properties:
+      domain:
+        example: https://acme.com
+        type: string
+      email:
+        example: contact@acme.com
+        type: string
+      name:
+        example: Acme Corporation
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - email
+    - name
+    type: object
+  tenant.Tenant:
+    description: Tenant account information with contact details and status
+    properties:
+      created_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      domain:
+        example: https://acme.com
+        type: string
+      email:
+        example: contact@acme.com
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: Acme Corporation
+        type: string
+      updated_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+    type: object
+  tenant.UpdateTenantParams:
+    description: Parameters for updating tenant information (all fields optional except
+      ID)
+    properties:
+      domain:
+        example: https://newdomain.acme.com
+        type: string
+      email:
+        example: newemail@acme.com
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      is_active:
+        example: false
+        type: boolean
+      name:
+        example: Acme Corporation Updated
+        maxLength: 100
+        minLength: 2
+        type: string
+    required:
+    - id
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@flowcargo.com
+    name: API Support
+    url: http://www.flowcargo.com/support
+  description: Multi-tenant cargo management system API
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: FlowCargo API
+  version: "1.0"
+paths:
+  /tenants:
+    post:
+      consumes:
+      - application/json
+      description: Create a new tenant with the provided information
+      parameters:
+      - description: Tenant creation parameters
+        in: body
+        name: tenant
+        required: true
+        schema:
+          $ref: '#/definitions/tenant.CreateTenantParams'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-tenant_Tenant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-any'
+      summary: Create a new tenant
+      tags:
+      - tenants
+  /tenants/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Delete an existing tenant by their unique identifier
+      parameters:
+      - description: Tenant ID (UUID format)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-tenant_Tenant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-any'
+      summary: Delete a tenant
+      tags:
+      - tenants
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a tenant's information by their unique identifier
+      parameters:
+      - description: Tenant ID (UUID format)
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-tenant_Tenant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-any'
+      summary: Get a tenant by ID
+      tags:
+      - tenants
+    put:
+      consumes:
+      - application/json
+      description: Update an existing tenant's information by their unique identifier
+      parameters:
+      - description: Tenant ID (UUID format)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Tenant update parameters
+        in: body
+        name: tenant
+        required: true
+        schema:
+          $ref: '#/definitions/tenant.UpdateTenantParams'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-tenant_Tenant'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-any'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/restutils.APIResponse-any'
+      summary: Update a tenant
+      tags:
+      - tenants
+schemes:
+- http
+- https
+swagger: "2.0"
