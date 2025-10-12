@@ -25,5 +25,5 @@ const (
 var (
 	ErrResourceConflict = errors.New(string(ErrCodeConflict))
 	ErrResourceNotFound = errors.New(string(ErrCodeNotFound))
-	ErrUnauthorized = errors.New(string(ErrCodeUnauthorized))
+	ErrUnauthorized     = errors.New(string(ErrCodeUnauthorized))
 )
