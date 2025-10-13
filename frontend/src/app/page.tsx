@@ -14,7 +14,7 @@ export default function HomePage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
           <Link
             href="/admin"
-            className="p-8 border border-foreground/20 rounded-lg hover:border-foreground/40 transition-colors"
+            className="p-8 border border-foreground/20 rounded-lg"
           >
             <h2 className="text-2xl font-semibold mb-2">Admin Dashboard →</h2>
             <p className="text-foreground/60">
@@ -24,7 +24,7 @@ export default function HomePage() {
 
           <Link
             href="/tracking"
-            className="p-8 border border-foreground/20 rounded-lg hover:border-foreground/40 transition-colors"
+            className="p-8 border border-foreground/20 rounded-lg"
           >
             <h2 className="text-2xl font-semibold mb-2">Track Shipment →</h2>
             <p className="text-foreground/60">
