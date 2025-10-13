@@ -6,16 +6,17 @@ export const metadata: Metadata = {
   description: "FlowCargo - Shipment and Tenant Management System",
 };
 
+// app/layout.tsx
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: {
+  children: React.ReactNode
+}) {
   return (
-    <html lang="en" className="dark">
-      <body className="antialiased">
+    <html lang="en">
+      <body className="bg-neutral-800 text-purple-200">
         {children}
       </body>
     </html>
-  );
+  )
 }
