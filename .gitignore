@@ -55,3 +55,9 @@ TODO.md
 
 # Markdown files
 *.md
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
