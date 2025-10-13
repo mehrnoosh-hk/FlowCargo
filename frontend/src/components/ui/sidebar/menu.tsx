@@ -13,111 +13,116 @@ import {
 import { useSidebar } from "./context"
 import { sidebarMenuButtonVariants } from "./variants"
 
-export const SidebarMenu = React.forwardRef<
-    HTMLUListElement,
-    React.ComponentProps<"ul">
->(({ className, ...props }, ref) => (
-    <ul
-        ref={ref}
-        data-sidebar="menu"
-        className={cn("flex w-full min-w-0 flex-col gap-1", className)}
-        {...props}
-    />
-))
-SidebarMenu.displayName = "SidebarMenu"
+export function SidebarMenu({
+    className,
+    ref,
+    ...props
+}: React.ComponentProps<"ul"> & {
+    ref?: React.Ref<HTMLUListElement>
+}) {
+    return (
+        <ul
+            ref={ref}
+            data-sidebar="menu"
+            className={cn("flex w-full min-w-0 flex-col gap-1", className)}
+            {...props}
+        />
+    )
+}
 
-export const SidebarMenuItem = React.forwardRef<
-    HTMLLIElement,
-    React.ComponentProps<"li">
->(({ className, ...props }, ref) => (
-    <li
-        ref={ref}
-        data-sidebar="menu-item"
-        className={cn("group/menu-item relative", className)}
-        {...props}
-    />
-))
-SidebarMenuItem.displayName = "SidebarMenuItem"
+export function SidebarMenuItem({
+    className,
+    ref,
+    ...props
+}: React.ComponentProps<"li"> & {
+    ref?: React.Ref<HTMLLIElement>
+}) {
+    return (
+        <li
+            ref={ref}
+            data-sidebar="menu-item"
+            className={cn("group/menu-item relative", className)}
+            {...props}
+        />
+    )
+}
 
-export const SidebarMenuButton = React.forwardRef<
-    HTMLButtonElement,
-    React.ComponentProps<"button"> & {
-        asChild?: boolean
-        isActive?: boolean
-        tooltip?: string | React.ComponentProps<typeof TooltipContent>
-    } & VariantProps<typeof sidebarMenuButtonVariants>
->(
-    (
-        {
-            asChild = false,
-            isActive = false,
-            variant = "default",
-            size = "default",
-            tooltip,
-            className,
-            onClick,
-            ...props
-        },
-        ref
-    ) => {
-        const Comp = asChild ? Slot : "button"
-        const { isMobile, state, setOpen } = useSidebar()
+export function SidebarMenuButton({
+    asChild = false,
+    isActive = false,
+    variant = "default",
+    size = "default",
+    tooltip,
+    className,
+    onClick,
+    ref,
+    ...props
+}: React.ComponentProps<"button"> & {
+    asChild?: boolean
+    isActive?: boolean
+    tooltip?: string | React.ComponentProps<typeof TooltipContent>
+    ref?: React.Ref<HTMLButtonElement>
+} & VariantProps<typeof sidebarMenuButtonVariants>) {
+    const Comp = asChild ? Slot : "button"
+    const { isMobile, state, setOpen } = useSidebar()
 
-        const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-            // If sidebar is collapsed, expand it on click
-            if (state === "collapsed" && !isMobile) {
-                setOpen(true)
-            } else {
-                setOpen(false)
-            }
-            // Call the original onClick if provided
-            onClick?.(event)
+    const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+        // If sidebar is collapsed, expand it on click
+        if (state === "collapsed" && !isMobile) {
+            setOpen(true)
+        } else {
+            setOpen(false)
         }
+        // Call the original onClick if provided
+        onClick?.(event)
+    }
 
-        const button = (
-            <Comp
-                ref={ref}
-                data-sidebar="menu-button"
-                data-size={size}
-                data-active={isActive}
-                className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
-                onClick={handleClick}
-                {...props}
+    const button = (
+        <Comp
+            ref={ref}
+            data-sidebar="menu-button"
+            data-size={size}
+            data-active={isActive}
+            className={cn(sidebarMenuButtonVariants({ variant, size }), className)}
+            onClick={handleClick}
+            {...props}
+        />
+    )
+
+    if (!tooltip) {
+        return button
+    }
+
+    if (typeof tooltip === "string") {
+        tooltip = {
+            children: tooltip,
+        }
+    }
+
+    return (
+        <Tooltip>
+            <TooltipTrigger asChild>{button}</TooltipTrigger>
+            <TooltipContent
+                side="right"
+                align="center"
+                hidden={state !== "collapsed" || isMobile}
+                {...tooltip}
             />
-        )
+        </Tooltip>
+    )
+}
 
-        if (!tooltip) {
-            return button
-        }
-
-        if (typeof tooltip === "string") {
-            tooltip = {
-                children: tooltip,
-            }
-        }
-
-        return (
-            <Tooltip>
-                <TooltipTrigger asChild>{button}</TooltipTrigger>
-                <TooltipContent
-                    side="right"
-                    align="center"
-                    hidden={state !== "collapsed" || isMobile}
-                    {...tooltip}
-                />
-            </Tooltip>
-        )
-    }
-)
-SidebarMenuButton.displayName = "SidebarMenuButton"
-
-export const SidebarMenuAction = React.forwardRef<
-    HTMLButtonElement,
-    React.ComponentProps<"button"> & {
-        asChild?: boolean
-        showOnHover?: boolean
-    }
->(({ className, asChild = false, showOnHover = false, ...props }, ref) => {
+export function SidebarMenuAction({
+    className,
+    asChild = false,
+    showOnHover = false,
+    ref,
+    ...props
+}: React.ComponentProps<"button"> & {
+    asChild?: boolean
+    showOnHover?: boolean
+    ref?: React.Ref<HTMLButtonElement>
+}) {
     const Comp = asChild ? Slot : "button"
 
     return (
@@ -139,36 +144,42 @@ export const SidebarMenuAction = React.forwardRef<
             {...props}
         />
     )
-})
-SidebarMenuAction.displayName = "SidebarMenuAction"
+}
 
-export const SidebarMenuBadge = React.forwardRef<
-    HTMLDivElement,
-    React.ComponentProps<"div">
->(({ className, ...props }, ref) => (
-    <div
-        ref={ref}
-        data-sidebar="menu-badge"
-        className={cn(
-            "pointer-events-none absolute right-1 flex h-5 min-w-5 select-none items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-sidebar-foreground",
-            "peer-hover/menu-button:text-sidebar-accent-foreground peer-data-[active=true]/menu-button:text-sidebar-accent-foreground",
-            "peer-data-[size=sm]/menu-button:top-1",
-            "peer-data-[size=default]/menu-button:top-1.5",
-            "peer-data-[size=lg]/menu-button:top-2.5",
-            "group-data-[collapsible=icon]:hidden",
-            className
-        )}
-        {...props}
-    />
-))
-SidebarMenuBadge.displayName = "SidebarMenuBadge"
+export function SidebarMenuBadge({
+    className,
+    ref,
+    ...props
+}: React.ComponentProps<"div"> & {
+    ref?: React.Ref<HTMLDivElement>
+}) {
+    return (
+        <div
+            ref={ref}
+            data-sidebar="menu-badge"
+            className={cn(
+                "pointer-events-none absolute right-1 flex h-5 min-w-5 select-none items-center justify-center rounded-md px-1 text-xs font-medium tabular-nums text-sidebar-foreground",
+                "peer-hover/menu-button:text-sidebar-accent-foreground peer-data-[active=true]/menu-button:text-sidebar-accent-foreground",
+                "peer-data-[size=sm]/menu-button:top-1",
+                "peer-data-[size=default]/menu-button:top-1.5",
+                "peer-data-[size=lg]/menu-button:top-2.5",
+                "group-data-[collapsible=icon]:hidden",
+                className
+            )}
+            {...props}
+        />
+    )
+}
 
-export const SidebarMenuSkeleton = React.forwardRef<
-    HTMLDivElement,
-    React.ComponentProps<"div"> & {
-        showIcon?: boolean
-    }
->(({ className, showIcon = false, ...props }, ref) => {
+export function SidebarMenuSkeleton({
+    className,
+    showIcon = false,
+    ref,
+    ...props
+}: React.ComponentProps<"div"> & {
+    showIcon?: boolean
+    ref?: React.Ref<HTMLDivElement>
+}) {
     // Random width between 50 to 90%.
     const width = React.useMemo(() => {
         return `${Math.floor(Math.random() * 40) + 50}%`
@@ -198,40 +209,51 @@ export const SidebarMenuSkeleton = React.forwardRef<
             />
         </div>
     )
-})
-SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton"
+}
 
-export const SidebarMenuSub = React.forwardRef<
-    HTMLUListElement,
-    React.ComponentProps<"ul">
->(({ className, ...props }, ref) => (
-    <ul
-        ref={ref}
-        data-sidebar="menu-sub"
-        className={cn(
-            "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5",
-            "group-data-[collapsible=icon]:hidden",
-            className
-        )}
-        {...props}
-    />
-))
-SidebarMenuSub.displayName = "SidebarMenuSub"
+export function SidebarMenuSub({
+    className,
+    ref,
+    ...props
+}: React.ComponentProps<"ul"> & {
+    ref?: React.Ref<HTMLUListElement>
+}) {
+    return (
+        <ul
+            ref={ref}
+            data-sidebar="menu-sub"
+            className={cn(
+                "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-l border-sidebar-border px-2.5 py-0.5",
+                "group-data-[collapsible=icon]:hidden",
+                className
+            )}
+            {...props}
+        />
+    )
+}
 
-export const SidebarMenuSubItem = React.forwardRef<
-    HTMLLIElement,
-    React.ComponentProps<"li">
->(({ ...props }, ref) => <li ref={ref} {...props} />)
-SidebarMenuSubItem.displayName = "SidebarMenuSubItem"
+export function SidebarMenuSubItem({
+    ref,
+    ...props
+}: React.ComponentProps<"li"> & {
+    ref?: React.Ref<HTMLLIElement>
+}) {
+    return <li ref={ref} {...props} />
+}
 
-export const SidebarMenuSubButton = React.forwardRef<
-    HTMLAnchorElement,
-    React.ComponentProps<"a"> & {
-        asChild?: boolean
-        size?: "sm" | "md"
-        isActive?: boolean
-    }
->(({ asChild = false, size = "md", isActive, className, ...props }, ref) => {
+export function SidebarMenuSubButton({
+    asChild = false,
+    size = "md",
+    isActive,
+    className,
+    ref,
+    ...props
+}: React.ComponentProps<"a"> & {
+    asChild?: boolean
+    size?: "sm" | "md"
+    isActive?: boolean
+    ref?: React.Ref<HTMLAnchorElement>
+}) {
     const Comp = asChild ? Slot : "a"
 
     return (
@@ -251,5 +273,4 @@ export const SidebarMenuSubButton = React.forwardRef<
             {...props}
         />
     )
-})
-SidebarMenuSubButton.displayName = "SidebarMenuSubButton"
+}

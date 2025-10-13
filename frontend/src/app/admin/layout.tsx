@@ -18,5 +18,5 @@ export default function AdminDashboard({ children }: { children: React.ReactNode
                 {children}
             </main>
         </SidebarProvider>
-      );
+    );
 }
